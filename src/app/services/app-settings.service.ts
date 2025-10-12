@@ -70,6 +70,14 @@ export class AppSettingsService {
       shouldRandom: false,
     },
     {
+      name: 'XNOPay UK 1',
+      value: 'xnopay-uk-1',
+      api: 'https://uk1.public.xnopay.com/proxy',
+      ws: 'wss://uk1.public.xnopay.com/ws',
+      auth: null,
+      shouldRandom: true,
+    },
+    {
       name: 'Rainstorm City',
       value: 'rainstorm',
       api: 'https://rainstorm.city/api',
