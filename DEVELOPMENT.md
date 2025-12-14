@@ -2,7 +2,7 @@
 
 ## Application Structure
 
-- [Nault](https://github.com/Nault/Nault) - The main wallet application (UI + Seed Generation/Block Signing/Etc).
+- [Nault](https://github.com/banano-trade/Banano-Nault) - The main wallet application (UI + Seed Generation/Block Signing/Etc).
 - Communication with the network is done via nano RPC and Websocket protocols, private or public on any nano network.
 
 ## Development Prerequisites
@@ -12,7 +12,7 @@
 ## Development Guide
 #### Clone repository and install dependencies
 ```bash
-git clone https://github.com/Nault/Nault
+git clone https://github.com/banano-trade/Banano-Nault
 cd Nault
 npm install
 ```

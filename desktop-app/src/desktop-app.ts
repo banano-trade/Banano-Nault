@@ -350,20 +350,20 @@ function getApplicationMenu() {
         },
         {
           label: 'Discord (Banano)',
-          click () { loadExternal('https://chat.banano.cc'); }
+          click () { loadExternal('http://chat.banano.cc/'); }
         },
         {type: 'separator'},
         {
           label: 'View GitHub',
-          click () { loadExternal('https://github.com/Nault/Nault'); }
+          click () { loadExternal('https://github.com/banano-trade/Banano-Nault'); }
         },
         {
           label: 'Submit a bug report',
-          click () { loadExternal('https://github.com/Nault/Nault/issues/new'); }
+          click () { loadExternal('https://github.com/banano-trade/Banano-Nault/issues/new'); }
         },
         {
           label: 'Release notes',
-          click () { loadExternal('https://github.com/Nault/Nault/releases'); }
+          click () { loadExternal('https://github.com/banano-trade/Banano-Nault/releases'); }
         },
         {type: 'separator'},
         {

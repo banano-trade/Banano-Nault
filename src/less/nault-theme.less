@@ -83,6 +83,31 @@ h1, h2, h3, h4, h5, .uk-text-lead, .uk-button, .uk-alert, .uk-description-list d
 	border-radius: 6px;
 }
 
+.uk-badge {
+	background: #f6e05e;
+	color: #1a1a1a;
+	font-weight: 700;
+	border: 1px solid #d9c334;
+
+	.label {
+		color: inherit;
+	}
+}
+// Enforce legible badge text even inside dark/light UIkit contexts
+.uk-light .uk-badge,
+.uk-card-primary .uk-badge,
+.uk-card-secondary .uk-badge,
+.uk-section-primary:not(.uk-preserve-color) .uk-badge,
+.uk-section-secondary:not(.uk-preserve-color) .uk-badge,
+.uk-tile-primary:not(.uk-preserve-color) .uk-badge,
+.uk-tile-secondary:not(.uk-preserve-color) .uk-badge,
+.uk-overlay-primary .uk-badge,
+.uk-offcanvas-bar .uk-badge {
+	color: #1a1a1a;
+	background: #f6e05e;
+	border: 1px solid #d9c334;
+}
+
 .nlt-inline-alert {
 	display: inline-flex;
 
@@ -339,8 +364,15 @@ input[type=number] {
 		text-decoration: none;
 	}
 
-	&.interactable:hover, &.blue {
+	&.interactable:hover {
 		.account-label-hover-styles();
+	}
+
+	&.blue, &.blue:hover {
+		background: #f6e05e;
+		color: #1a1a1a;
+		border-color: #d9c334;
+		font-weight: 700;
 	}
 
 	&.rep {

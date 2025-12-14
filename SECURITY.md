@@ -11,5 +11,5 @@ Currently the following versions are supported:
 
 ## Reporting a Vulnerability
 
-Use the Github Issues or [Discord](http://discord.nanocenter.org/) for general issues or questions.
+Use the Github Issues or [Discord](http://chat.banano.cc/) for general issues or questions.
 Further information for critical vulnerabilities can be obtained there as well.

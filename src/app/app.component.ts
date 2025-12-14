@@ -12,7 +12,6 @@ import {SwUpdate} from '@angular/service-worker';
 import {RepresentativeService} from './services/representative.service';
 import {NodeService} from './services/node.service';
 import { DesktopService, LedgerService } from './services';
-import { environment } from 'environments/environment';
 import { DeeplinkService } from './services/deeplink.service';
 import { TranslocoService } from '@ngneat/transloco';
 
@@ -64,7 +63,6 @@ export class AppComponent implements OnInit {
   canToggleLightMode = true;
   searchData = '';
   isConfigured = this.walletService.isConfigured;
-  donationAccount = environment.donationAddress;
 
   @HostListener('window:resize', ['$event']) onResize (e) {
     this.onWindowResize(e.target);

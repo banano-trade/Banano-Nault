@@ -1,12 +1,12 @@
 # Nault
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/nault/nault)
-[![GitHub All Releases](https://img.shields.io/github/downloads/nault/nault/total)](https://github.com/Nault/Nault/releases/latest)
-[![Discord](https://img.shields.io/badge/discord-join%20chat-orange.svg?logo=discord&color=7289DA)](https://discord.nanocenter.org)
+[![GitHub All Releases](https://img.shields.io/github/downloads/banano-trade/Banano-Nault/total)](https://github.com/banano-trade/Banano-Nault/releases/latest)
+[![Discord](https://img.shields.io/badge/discord-join%20chat-orange.svg?logo=discord&color=7289DA)](http://chat.banano.cc/)
 
 Nault is a community-driven fork of the popular nano wallet [NanoVault](https://github.com/cronoh/nanovault) 💙
 
-It's a fully client-side signing wallet for sending and receiving [nano](https://github.com/nanocurrency/nano-node/) either directly in your browser at [nault.cc](https://nault.cc) or with the [desktop app](https://github.com/Nault/Nault/releases/latest).
+It's a fully client-side signing wallet for sending and receiving [nano](https://github.com/nanocurrency/nano-node/) either directly in your browser at [nault.cc](https://nault.cc) or with the [desktop app](https://github.com/banano-trade/Banano-Nault/releases/latest).
 
 Seamless integration with any nano compatible RPC backend/websocket and the aim to be more frequently maintained are some of the main features. Those together will greatly increase the stability, performance and uptime.
 
@@ -16,7 +16,7 @@ ___
 ## How To Use
 Nault comes in different flavors to suit your needs.
 #### Desktop App
-Available for Windows/Mac/Linux – just head over to the [latest release](https://github.com/Nault/Nault/releases/latest) and download the version for your OS. Arch Linux users may [install it from the (unofficial) AUR](https://aur.archlinux.org/packages/nault-bin/).
+Available for Windows/Mac/Linux – just head over to the [latest release](https://github.com/banano-trade/Banano-Nault/releases/latest) and download the version for your OS. Arch Linux users may [install it from the (unofficial) AUR](https://aur.archlinux.org/packages/nault-bin/).
 
 If you want to verify the binary checksum there are plenty of apps to do this. One way is using a powershell or bash terminal:
 
@@ -50,7 +50,7 @@ If you want to know how to setup the development environment head over to [DEVEL
 
 ## Support
 
-If you are looking for more interactive and quick support compared to creating a new Github issue, you will then find most of the developers in the Nault channel over at the [TNC discord server](https://discord.nanocenter.org/).
+If you are looking for more interactive and quick support compared to creating a new Github issue, you will then find most of the developers in the Nault channel over at the [TNC discord server](http://chat.banano.cc/).
 
 ## Acknowledgements
 
