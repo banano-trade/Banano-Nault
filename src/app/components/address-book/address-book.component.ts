@@ -28,7 +28,7 @@ export interface BalanceAccount {
 
 export class AddressBookComponent implements OnInit, AfterViewInit, OnDestroy {
 
-  nano = 1000000000000000000000000;
+  nano = new BigNumber('1e23');
   activePanel = 0;
   creatingNewEntry = false;
 
@@ -285,8 +285,8 @@ export class AddressBookComponent implements OnInit, AfterViewInit, OnDestroy {
       return this.notificationService.sendError(this.translocoService.translate('address-book.this-name-is-reserved-for-decentralized-aliases'));
     }
 
-    // Remove spaces and convert to nano prefix
-    this.newAddressAccount = this.newAddressAccount.replace(/ /g, '').replace('xrb_', 'nano_');
+    // Remove spaces and convert to ban prefix
+    this.newAddressAccount = this.util.account.setPrefix(this.newAddressAccount.replace(/ /g, ''), 'ban');
 
     // If the name has been changed, make sure no other entries are using that name
     if ( (this.newAddressName !== this.previousAddressName) && this.addressBookService.nameExists(this.newAddressName) ) {

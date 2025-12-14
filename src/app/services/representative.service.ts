@@ -56,7 +56,7 @@ export interface FullRepresentativeOverview extends RepresentativeApiOverview {
 
 @Injectable()
 export class RepresentativeService {
-  storeKey = `nanovault-representatives`;
+  storeKey = `banvault-representatives`;
 
   representatives$ = new BehaviorSubject([]);
   representatives = [];
@@ -78,6 +78,7 @@ export class RepresentativeService {
     private ninja: NinjaService
   ) {
     this.representatives = this.defaultRepresentatives;
+    this.tryUpdateRepresentativesFromCreeper();
   }
 
   /**
@@ -160,11 +161,11 @@ export class RepresentativeService {
       let status = 'none';
       let label;
 
-      if (percent.gte(3)) {
+      if (percent.gte(10)) {
         status = 'alert'; // Has extremely high voting weight
         repStatus.veryHighWeight = true;
         repStatus.changeRequired = true;
-      } else if (percent.gte(2)) {
+      } else if (percent.gte(5)) {
         status = 'warn'; // Has high voting weight
         repStatus.highWeight = true;
       }
@@ -316,6 +317,18 @@ export class RepresentativeService {
    */
   async getOnlineRepresentatives(): Promise<string[]> {
     const representatives = [];
+
+    const creeperReps = await this.getCreeperRepresentatives();
+    if (Array.isArray(creeperReps) && creeperReps.length) {
+      const online = creeperReps
+        .filter(rep => rep?.online)
+        .map(rep => this.util.account.normalizeAccount(rep.address, 'ban'))
+        .filter(acc => this.util.account.isValidAccount(acc));
+      if (online.length) {
+        return online;
+      }
+    }
+
     const reps = await this.api.representativesOnline();
     if (!reps) return representatives;
     for (const representative in reps.representatives) {
@@ -357,13 +370,19 @@ export class RepresentativeService {
     if (this.loaded) return this.representatives;
 
     let list = this.defaultRepresentatives;
-    const representativeStore = localStorage.getItem(this.storeKey);
+    const representativeStore = localStorage.getItem(this.storeKey) || localStorage.getItem('nanovault-representatives');
     if (representativeStore) {
       list = JSON.parse(representativeStore);
+      localStorage.setItem(this.storeKey, representativeStore);
+      localStorage.removeItem('nanovault-representatives');
     }
     this.representatives = list;
     this.representatives$.next(list);
     this.loaded = true;
+
+    if (!representativeStore) {
+      this.tryUpdateRepresentativesFromCreeper();
+    }
 
     return list;
   }
@@ -375,10 +394,8 @@ export class RepresentativeService {
     const list = JSON.parse(representativeStore);
 
     const newRepList = list.map(entry => {
-      if (entry.id.indexOf('xrb_') !== -1) {
-        entry.id = entry.id.replace('xrb_', 'nano_');
-      }
-      return entry;
+      const id = (entry.id || '').replace(/^(xrb|nano)_/i, 'ban_');
+      return { ...entry, id };
     });
 
     localStorage.setItem(this.storeKey, JSON.stringify(newRepList));
@@ -454,43 +471,56 @@ export class RepresentativeService {
 
   // Default representatives list
   // eslint-disable-next-line @typescript-eslint/member-ordering
-  defaultRepresentatives = [];
+  defaultRepresentatives: StoredRepresentative[] = [
+    { id: 'ban_1hootubxy68fhhrctjmaias148tz91tsse3pq1pgmfedsm3cubhobuihqnxd', name: 'ban_1hoot...hqnxd', trusted: true },
+    { id: 'ban_1bananobh5rat99qfgt1ptpieie5swmoth87thi74qgbfrij7dcgjiij94xr', name: 'ban_1banan...94xr', trusted: true },
+    { id: 'ban_1ka1ium4pfue3uxtntqsrib8mumxgazsjf58gidh1xeo5te3whsq8z476goo', name: 'ban_1ka1i...6goo', trusted: true },
+    { id: 'ban_3batmanuenphd7osrez9c45b3uqw9d9u81ne8xa6m43e1py56y9p48ap69zg', name: 'ban_3batm...69zg' },
+    { id: 'ban_1banbet1hxxe9aeu11oqss9sxwe814jo9ym8c98653j1chq4k4yaxjsacnhc', name: 'ban_1banb...cnhc' },
+    { id: 'ban_1heart7e8u4tnyowup9hwchx8tkfaqjiyp67si74gdanziizegf7p37jd6gf', name: 'ban_1hear...d6gf', trusted: true },
+    { id: 'ban_3grayknbwtrjdsbdgsjbx4fzds7eufjqghzu6on57aqxte7fhhh14gxbdz61', name: 'ban_3gray...dz61' },
+    { id: 'ban_3pa1m3g79i1h7uijugndjeytpmqbsg6hc19zm8m7foqygwos1mmcqmab91hh', name: 'ban_3pa1m...91hh' },
+    { id: 'ban_3tacocatezozswnu8xkh66qa1dbcdujktzmfpdj7ax66wtfrio6h5sxikkep', name: 'ban_3taco...kkep' },
+    { id: 'ban_1moonanoj76om1e9gnji5mdfsopnr5ddyi6k3qtcbs8nogyjaa6p8j87sgid', name: 'ban_1moon...sgid' },
+    { id: 'ban_1goobcumtuqe37htu4qwtpkxnjj4jjheyz6e6kke3mro7d8zq5d36yskphqt', name: 'ban_1goob...phqt' },
+  ];
 
   // Bad representatives hardcoded to be avoided. Not visible in the user rep list
   // eslint-disable-next-line @typescript-eslint/member-ordering
-  nfReps = [
-    {
-      id: 'nano_3arg3asgtigae3xckabaaewkx3bzsh7nwz7jkmjos79ihyaxwphhm6qgjps4',
-      name: 'Nano Foundation #1',
-    },
-    {
-      id: 'nano_1stofnrxuz3cai7ze75o174bpm7scwj9jn3nxsn8ntzg784jf1gzn1jjdkou',
-      name: 'Nano Foundation #2',
-    },
-    {
-      id: 'nano_1q3hqecaw15cjt7thbtxu3pbzr1eihtzzpzxguoc37bj1wc5ffoh7w74gi6p',
-      name: 'Nano Foundation #3',
-    },
-    {
-      id: 'nano_3dmtrrws3pocycmbqwawk6xs7446qxa36fcncush4s1pejk16ksbmakis78m',
-      name: 'Nano Foundation #4',
-    },
-    {
-      id: 'nano_3hd4ezdgsp15iemx7h81in7xz5tpxi43b6b41zn3qmwiuypankocw3awes5k',
-      name: 'Nano Foundation #5',
-    },
-    {
-      id: 'nano_1awsn43we17c1oshdru4azeqjz9wii41dy8npubm4rg11so7dx3jtqgoeahy',
-      name: 'Nano Foundation #6',
-    },
-    {
-      id: 'nano_1anrzcuwe64rwxzcco8dkhpyxpi8kd7zsjc1oeimpc3ppca4mrjtwnqposrs',
-      name: 'Nano Foundation #7',
-    },
-    {
-      id: 'nano_1hza3f7wiiqa7ig3jczyxj5yo86yegcmqk3criaz838j91sxcckpfhbhhra1',
-      name: 'Nano Foundation #8',
-    },
-  ];
+  nfReps = [];
+
+  private async tryUpdateRepresentativesFromCreeper(minWeight = 100000) {
+    const creeperReps = await this.getCreeperRepresentatives(minWeight);
+    if (!creeperReps || !creeperReps.length) return;
+
+    const mapped = this.mapCreeperRepsToStored(creeperReps);
+    if (!mapped.length) return;
+
+    this.defaultRepresentatives = mapped;
+
+    if (!localStorage.getItem(this.storeKey)) {
+      this.representatives = mapped;
+      this.representatives$.next(mapped);
+    }
+  }
+
+  private async getCreeperRepresentatives(minWeight = 100000): Promise<any[] | null> {
+    return await this.api.creeperRepresentatives(minWeight, true);
+  }
+
+  private mapCreeperRepsToStored(creeperReps: any[]): StoredRepresentative[] {
+    return creeperReps
+      .map((rep, idx) => {
+        const id = this.util.account.normalizeAccount(rep.address || '', 'ban');
+        if (!this.util.account.isValidAccount(id)) return null;
+        const short = `${id.slice(0, 11)}...${id.slice(-6)}`;
+        return {
+          id,
+          name: short,
+          trusted: !!rep.online,
+        } as StoredRepresentative;
+      })
+      .filter((rep): rep is StoredRepresentative => !!rep);
+  }
 
 }

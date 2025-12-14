@@ -7,7 +7,7 @@ import { TxType } from './util.service';
 
 @Injectable()
 export class ApiService {
-  storeKey = `nanovault-active-difficulty`;
+  storeKey = `banvault-active-difficulty`;
   constructor(private http: HttpClient, private node: NodeService, private appSettings: AppSettingsService) { }
 
   private async request(action, data, skipError, url = '', validateResponse?): Promise<any> {
@@ -112,6 +112,21 @@ export class ApiService {
   }
   async representativesOnline(): Promise<{ representatives: any }> {
     return await this.request('representatives_online', { }, false);
+  }
+
+  async creeperRepresentatives(minimumWeight = 100000, includeDelegatorCount = true): Promise<any[] | null> {
+    const url = 'https://api.creeper.banano.cc/banano/v1/representatives';
+    const body = { minimumWeight, includeDelegatorCount };
+    try {
+      const res: any = await this.http.post(url, body, { responseType: 'json' }).toPromise();
+      if (Array.isArray(res)) {
+        return res;
+      }
+      return null;
+    } catch (err) {
+      console.log('Creeper representatives fetch failed', err?.status || err);
+      return null;
+    }
   }
 
   async blocksInfo(blocks): Promise<{blocks: any, error?: string}> {

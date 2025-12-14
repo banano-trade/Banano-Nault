@@ -6,6 +6,9 @@ import * as nanocurrency from 'nanocurrency';
 const nacl = window['nacl'];
 const STATE_BLOCK_PREAMBLE = '0000000000000000000000000000000000000000000000000000000000000006';
 const pbkdf2_1 = require('pbkdf2');
+const BAN_PREFIX = 'ban';
+const ALLOWED_PREFIXES = ['ban', 'nano', 'xrb'];
+const MAX_RAW = new BigNumber('340282366920938463463374607431768211455'); // 2^128 - 1
 
 export interface StateBlock {
   account: string;
@@ -61,8 +64,10 @@ export class UtilService {
     getAccountPublicKey: getAccountPublicKey,
     getAccountChecksum: getAccountChecksum,
     setPrefix: setPrefix,
+    normalizeAccount: normalizeAccount,
     isValidAccount: isValidAccount,
-    isValidNanoAmount: isValidNanoAmount,
+    isValidNanoAmount: isValidBanAmount,
+    isValidBanAmount: isValidBanAmount,
     isValidAmount: isValidAmount,
   };
   nano = {
@@ -236,6 +241,18 @@ function decToHex(decValue, bytes = null) {
   return hex;
 }
 
+function checkAmount(val: string|BigNumber) {
+  try {
+    const amount = new BigNumber(val);
+    if (!amount.isFinite() || amount.isNaN()) return false;
+    if (amount.isNegative()) return false;
+    if (!amount.isInteger()) return false;
+    return amount.lte(MAX_RAW);
+  } catch (err) {
+    return false;
+  }
+}
+
 // BigNumber functions
 function bigAdd(input, value) {
   const insert = new BigNumber(input);
@@ -293,7 +310,7 @@ function generateAccountKeyPair(accountSecretKeyBytes, expanded = false) {
   return nacl.sign.keyPair.fromSecretKey(accountSecretKeyBytes, expanded);
 }
 
-function getPublicAccountID(accountPublicKeyBytes, prefix = 'nano') {
+function getPublicAccountID(accountPublicKeyBytes, prefix = BAN_PREFIX) {
   const accountHex = util.uint8.toHex(accountPublicKeyBytes);
   const keyBytes = util.uint4.toUint8(util.hex.toUint4(accountHex)); // For some reason here we go from u, to hex, to 4, to 8??
   const checksum = util.uint5.toString(util.uint4.toUint5(util.uint8.toUint4(blake.blake2b(keyBytes, null, 5).reverse())));
@@ -303,15 +320,21 @@ function getPublicAccountID(accountPublicKeyBytes, prefix = 'nano') {
 }
 
 function isValidAccount(account: string): boolean {
-  return nanocurrency.checkAddress(account);
+  if (typeof account !== 'string') return false;
+  const sanitized = account.trim().toLowerCase();
+  const allowedPrefixes = ALLOWED_PREFIXES.join('|');
+  // 59-60 chars after prefix/underscore (accept minor variance)
+  const regex = new RegExp(`^(${allowedPrefixes})_[13][13456789abcdefghijkmnopqrstuwxyz]{59,60}$`);
+  return regex.test(sanitized);
 }
 
 // Check if a string is a numeric and larger than 0 but less than nano supply
-function isValidNanoAmount(val: string) {
+function isValidBanAmount(val: string) {
   // numerics and last character is not a dot and number of dots is 0 or 1
   const isnum = /^-?\d*\.?\d*$/.test(val);
   if (isnum && String(val).slice(-1) !== '.') {
-    if (val !== '' && mnanoToRaw(val).gte(1) && nanocurrency.checkAmount(mnanoToRaw(val).toString(10))) {
+    const amount = mnanoToRaw(val);
+    if (val !== '' && amount.gte(1) && checkAmount(amount.toString(10))) {
       return true;
     } else {
       return false;
@@ -323,16 +346,16 @@ function isValidNanoAmount(val: string) {
 
 // Check if valid raw amount
 function isValidAmount(val: string) {
-  return nanocurrency.checkAmount(val);
+  return checkAmount(val);
 }
 
 function getAccountPublicKey(account) {
   if (!isValidAccount(account)) {
-    throw new Error(`Invalid nano account`);
+    throw new Error(`Invalid account`);
   }
   const account_crop = account.length === 64 ? account.substring(4, 64) : account.substring(5, 65);
   const isValid = /^[13456789abcdefghijkmnopqrstuwxyz]+$/.test(account_crop);
-  if (!isValid) throw new Error(`Invalid nano account`);
+  if (!isValid) throw new Error(`Invalid account`);
 
   const key_uint4 = array_crop(uint5ToUint4(stringToUint5(account_crop.substring(0, 52))));
   const hash_uint4 = uint5ToUint4(stringToUint5(account_crop.substring(52, 60)));
@@ -344,20 +367,23 @@ function getAccountPublicKey(account) {
   return uint4ToHex(key_uint4);
 }
 
-function setPrefix(account, prefix = 'xrb') {
-  if (prefix === 'nano') {
-    return account.replace('xrb_', 'nano_');
-  } else {
-    return account.replace('nano_', 'xrb_');
-  }
+function setPrefix(account, prefix = BAN_PREFIX) {
+  const targetPrefix = (prefix || BAN_PREFIX).replace('_', '').toLowerCase();
+  const normalizedAccount = (account || '').toString().trim().toLowerCase();
+  const regex = new RegExp(`^(${ALLOWED_PREFIXES.join('|')})_`);
+  return normalizedAccount.replace(regex, `${targetPrefix}_`);
+}
+
+function normalizeAccount(account, prefix = BAN_PREFIX) {
+  return setPrefix(account, prefix);
 }
 
 /**
  * Conversion functions
  */
-const mnano = 1000000000000000000000000000000;
-const knano = 1000000000000000000000000000;
-const nano  = 1000000000000000000000000;
+const mnano = new BigNumber('1e29');  // 1 BAN
+const knano = new BigNumber('1e26');  // 0.001 BAN
+const nano  = new BigNumber('1e23');  // 0.000001 BAN
 function mnanoToRaw(value) {
   return new BigNumber(value).times(mnano);
 }
@@ -527,9 +553,11 @@ const util = {
     getAccountPublicKey: getAccountPublicKey,
     getAccountChecksum: getAccountChecksum,
     setPrefix: setPrefix,
+    normalizeAccount: normalizeAccount,
     isValidAccount: isValidAccount,
-    isValidNanoAmount: isValidNanoAmount,
-    isValidAmount: isValidNanoAmount,
+    isValidNanoAmount: isValidBanAmount, // legacy key name
+    isValidBanAmount: isValidBanAmount,
+    isValidAmount: isValidBanAmount,
   },
   nano: {
     mnanoToRaw: mnanoToRaw,

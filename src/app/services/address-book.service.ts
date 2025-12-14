@@ -12,7 +12,7 @@ interface AddressBookEntry {
 
 @Injectable()
 export class AddressBookService {
-  storeKey = `nanovault-addressbook`;
+  storeKey = `banvault-addressbook`;
 
   addressBook: AddressBookEntry[] = [];
 
@@ -22,9 +22,11 @@ export class AddressBookService {
 
   loadAddressBook() {
     let addressBook = [];
-    const addressBookStore = localStorage.getItem(this.storeKey);
+    const addressBookStore = localStorage.getItem(this.storeKey) || localStorage.getItem('nanovault-addressbook');
     if (addressBookStore) {
       addressBook = JSON.parse(addressBookStore);
+      localStorage.setItem(this.storeKey, addressBookStore);
+      localStorage.removeItem('nanovault-addressbook');
     }
     this.addressBook = addressBook;
     this.addressBook$.next(this.addressBook);
@@ -39,10 +41,8 @@ export class AddressBookService {
     const addressBook = JSON.parse(addressBookStore);
 
     const newAddressBook = addressBook.map(entry => {
-      if (entry.account.indexOf('xrb_') !== -1) {
-        entry.account = entry.account.replace('xrb_', 'nano_');
-      }
-      return entry;
+      const account = (entry.account || '').replace(/^(xrb|nano)_/i, 'ban_');
+      return { ...entry, account };
     });
 
     localStorage.setItem(this.storeKey, JSON.stringify(newAddressBook));

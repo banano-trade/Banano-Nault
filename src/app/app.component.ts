@@ -85,8 +85,8 @@ export class AppComponent implements OnInit {
 
     this.updateAppTheme();
 
-    // New for v19: Patch saved xrb_ prefixes to nano_
-    await this.patchXrbToNanoPrefixData();
+    // Patch legacy prefixes to ban_
+    await this.patchOldPrefixesToBanData();
 
     // set translation language
     this.translate.setActiveLang(this.settings.settings.language);
@@ -204,7 +204,7 @@ export class AppComponent implements OnInit {
       if (!this.settings.settings.serverAPI) return;
       await this.updateFiatPrices();
     } catch (err) {
-      this.notifications.sendWarning(`There was an issue retrieving latest nano price.  Ensure your AdBlocker is disabled on this page then reload to see accurate FIAT values.`, { length: 0, identifier: `price-adblock` });
+      this.notifications.sendWarning(`There was an issue retrieving latest Banano price.  Ensure your AdBlocker is disabled on this page then reload to see accurate FIAT values.`, { length: 0, identifier: `price-adblock` });
     }
   }
 
@@ -222,18 +222,18 @@ export class AppComponent implements OnInit {
   }
 
   /*
-    This is important as it looks through saved data using hardcoded xrb_ prefixes
-    (Your wallet, address book, rep list, etc) and updates them to nano_ prefix for v19 RPC
+    This looks through saved data using hardcoded legacy prefixes
+    (Your wallet, address book, rep list, etc) and updates them to ban_ prefix.
    */
-  async patchXrbToNanoPrefixData() {
+  async patchOldPrefixesToBanData() {
     // If wallet is version 2, data has already been patched.  Otherwise, patch all data
-    if (this.settings.settings.walletVersion >= 2) return;
+    if (this.settings.settings.walletVersion >= 3) return;
 
-    await this.walletService.patchOldSavedData(); // Change saved xrb_ addresses to nano_
+    await this.walletService.patchOldSavedData(); // Change saved xrb_/nano_ addresses to ban_
     this.addressBook.patchXrbPrefixData();
     this.representative.patchXrbPrefixData();
 
-    this.settings.setAppSetting('walletVersion', 2); // Update wallet version so we do not patch in the future.
+    this.settings.setAppSetting('walletVersion', 3); // Update wallet version so we do not patch in the future.
   }
 
   applySwUpdate() {
@@ -260,25 +260,16 @@ export class AppComponent implements OnInit {
   }
 
   toggleLightMode() {
-    if (this.canToggleLightMode === false) {
-      return;
-    }
-
-    this.canToggleLightMode = false;
-    setTimeout(() => { this.canToggleLightMode = true; }, 300);
-
-    this.settings.setAppSetting('lightModeEnabled', !this.settings.settings.lightModeEnabled);
+    // Light mode disabled for Banano theme; always stay in dark mode
+    this.settings.setAppSetting('lightModeEnabled', false);
     this.updateAppTheme();
   }
 
   updateAppTheme() {
-    if (this.settings.settings.lightModeEnabled) {
-      this.renderer.addClass(document.body, 'light-mode');
-      this.renderer.removeClass(document.body, 'dark-mode');
-    } else {
-      this.renderer.addClass(document.body, 'dark-mode');
-      this.renderer.removeClass(document.body, 'light-mode');
-    }
+    // Force dark mode
+    this.settings.setAppSetting('lightModeEnabled', false);
+    this.renderer.addClass(document.body, 'dark-mode');
+    this.renderer.removeClass(document.body, 'light-mode');
   }
 
   toggleAccountsDropdown() {
@@ -304,13 +295,14 @@ export class AppComponent implements OnInit {
     const searchData = this.searchData.trim();
     if (!searchData.length) return;
 
-    const isValidNanoAccount = (
-        ( searchData.startsWith('xrb_') || searchData.startsWith('nano_') )
+    const isValidBanAccount = (
+        ( searchData.startsWith('ban_') || searchData.startsWith('xrb_') || searchData.startsWith('nano_') )
       && this.util.account.isValidAccount(searchData)
     );
 
-    if (isValidNanoAccount === true) {
-      this.router.navigate(['account', searchData]);
+    if (isValidBanAccount === true) {
+      const banAccount = this.util.account.setPrefix(searchData, 'ban');
+      this.router.navigate(['account', banAccount]);
       this.searchData = '';
       return;
     }
@@ -324,7 +316,7 @@ export class AppComponent implements OnInit {
       return;
     }
 
-    this.notifications.sendWarning(`Invalid nano address or block hash! Please double check your input`);
+    this.notifications.sendWarning(`Invalid Banano address or block hash! Please double check your input`);
   }
 
   updateIdleTime() {
@@ -337,7 +329,7 @@ export class AppComponent implements OnInit {
       return;
     }
     this.walletService.reloadBalances();
-    this.notifications.sendInfo(`Attempting to reconnect to nano node`);
+    this.notifications.sendInfo(`Attempting to reconnect to Banano node`);
   }
 
   async updateFiatPrices() {

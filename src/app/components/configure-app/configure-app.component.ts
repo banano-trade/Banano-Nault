@@ -47,9 +47,9 @@ export class ConfigureAppComponent implements OnInit {
   selectedLanguage = this.languages[0].id;
 
   denominations = [
-    { name: 'XNO', value: 'mnano' },
-    { name: 'knano', value: 'knano' },
-    { name: 'nano', value: 'nano' },
+    { name: 'BAN', value: 'mban' },
+    { name: 'kBAN', value: 'kban' },
+    { name: 'banoshi', value: 'ban' },
   ];
   selectedDenomination = this.denominations[0].value;
 

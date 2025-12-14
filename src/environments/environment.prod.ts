@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
   desktop: false,
-  donationAddress: 'nano_3niceeeyiaa86k58zhaeygxfkuzgffjtwju9ep33z9c8qekmr3iuc95jbqc8',
+  donationAddress: 'ban_1bananobhctf9t1egq6rg6berd6h6rw7hwz5i8goewnq6zp1w7r9ndqf5oig',
 };

@@ -14,23 +14,23 @@ const nacl = window['nacl'];
 @Injectable()
 export class NanoBlockService {
   representativeAccounts = [
-    'nano_1x7biz69cem95oo7gxkrw6kzhfywq4x5dupw4z1bdzkb74dk9kpxwzjbdhhs', // NanoCrawler
-    'nano_1zuksmn4e8tjw1ch8m8fbrwy5459bx8645o9euj699rs13qy6ysjhrewioey', // Nanowallets.guide
-    'nano_3chartsi6ja8ay1qq9xg3xegqnbg1qx76nouw6jedyb8wx3r4wu94rxap7hg', // Nano Charts
-    'nano_1iuz18n4g4wfp9gf7p1s8qkygxw7wx9qfjq6a9aq68uyrdnningdcjontgar', // NanoTicker / Ricki
-    'nano_3msc38fyn67pgio16dj586pdrceahtn75qgnx7fy19wscixrc8dbb3abhbw6', // gr0vity
-    'nano_3patrick68y5btibaujyu7zokw7ctu4onikarddphra6qt688xzrszcg4yuo', // Patrick
-    'nano_1tk8h3yzkibbsti8upkfa69wqafz6mzfzgu8bu5edaay9k7hidqdunpr4tb6', // rsnano
-    'nano_3ekb6tp8ixtkibimyygepgkwckzhds9basxd5zfue4efjnxaan77gsnanick', // Nanick
-    'nano_1xckpezrhg56nuokqh6t1stjca67h37jmrp9qnejjkfgimx1msm9ehuaieuq', // Flying Amigos
-    'nano_3n7ky76t4g57o9skjawm8pprooz1bminkbeegsyt694xn6d31c6s744fjzzz', // Humble Nano
-    'nano_1wenanoqm7xbypou7x3nue1isaeddamjdnc3z99tekjbfezdbq8fmb659o7t', // WeNano
+    'ban_1hootubxy68fhhrctjmaias148tz91tsse3pq1pgmfedsm3cubhobuihqnxd',
+    'ban_1bananobh5rat99qfgt1ptpieie5swmoth87thi74qgbfrij7dcgjiij94xr',
+    'ban_1ka1ium4pfue3uxtntqsrib8mumxgazsjf58gidh1xeo5te3whsq8z476goo',
+    'ban_3batmanuenphd7osrez9c45b3uqw9d9u81ne8xa6m43e1py56y9p48ap69zg',
+    'ban_1banbet1hxxe9aeu11oqss9sxwe814jo9ym8c98653j1chq4k4yaxjsacnhc',
+    'ban_1heart7e8u4tnyowup9hwchx8tkfaqjiyp67si74gdanziizegf7p37jd6gf',
+    'ban_3grayknbwtrjdsbdgsjbx4fzds7eufjqghzu6on57aqxte7fhhh14gxbdz61',
+    'ban_3pa1m3g79i1h7uijugndjeytpmqbsg6hc19zm8m7foqygwos1mmcqmab91hh',
+    'ban_3tacocatezozswnu8xkh66qa1dbcdujktzmfpdj7ax66wtfrio6h5sxikkep',
+    'ban_1moonanoj76om1e9gnji5mdfsopnr5ddyi6k3qtcbs8nogyjaa6p8j87sgid',
+    'ban_1goobcumtuqe37htu4qwtpkxnjj4jjheyz6e6kke3mro7d8zq5d36yskphqt',
   ];
 
   zeroHash = '0000000000000000000000000000000000000000000000000000000000000000';
 
   // https://docs.nano.org/releases/network-upgrades/#epoch-blocks
-  epochV2SignerAccount = 'nano_3qb6o6i1tkzr6jwr5s7eehfxwg9x6eemitdinbpi7u8bjjwsgqfj4wzser3x';
+  epochV2SignerAccount = 'ban_3qb6o6i1tkzr6jwr5s7eehfxwg9x6eemitdinbpi7u8bjjwsgqfj4wzser3x';
 
   newOpenBlock$: BehaviorSubject<boolean|false> = new BehaviorSubject(false);
 
@@ -43,10 +43,16 @@ export class NanoBlockService {
     public settings: AppSettingsService) { }
 
   async generateChange(walletAccount, representativeAccount, ledger = false) {
+    const accountId = this.util.account.normalizeAccount(walletAccount.id, 'ban');
+    if (!this.util.account.isValidAccount(accountId)) {
+      throw new Error(`Invalid account`);
+    }
+    walletAccount.id = accountId;
+
     const toAcct = await this.api.accountInfo(walletAccount.id);
     if (!toAcct) throw new Error(`Account must have an open block first`);
 
-    const walletAccountPublicKey = this.util.account.getAccountPublicKey(walletAccount.id);
+    const walletAccountPublicKey = this.util.account.getAccountPublicKey(walletAccount.id.toLowerCase());
 
     await this.validateAccount(toAcct, walletAccountPublicKey);
 
@@ -192,6 +198,12 @@ export class NanoBlockService {
   // }
 
   async generateSend(walletAccount, toAccountID, rawAmount, ledger = false) {
+    const accountId = this.util.account.normalizeAccount(walletAccount.id, 'ban');
+    if (!this.util.account.isValidAccount(accountId)) {
+      throw new Error(`Invalid account`);
+    }
+    walletAccount.id = accountId;
+
     const fromAccount = await this.api.accountInfo(walletAccount.id);
     if (!fromAccount) throw new Error(`Unable to get account information for ${walletAccount.id}`);
 
@@ -254,6 +266,13 @@ export class NanoBlockService {
   }
 
   async generateReceive(walletAccount, sourceBlock, ledger = false) {
+    const accountId = this.util.account.normalizeAccount(walletAccount.id, 'ban');
+    if (!this.util.account.isValidAccount(accountId)) {
+      this.notifications.sendError(`Invalid account`, { identifier: 'invalid-account', length: 5000 });
+      return null;
+    }
+    walletAccount.id = accountId; // normalize for subsequent calls
+
     const toAcct = await this.api.accountInfo(walletAccount.id);
     const walletAccountPublicKey = this.util.account.getAccountPublicKey(walletAccount.id);
 

@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import {UtilService} from '../../services/util.service';
 import {AppSettingsService} from '../../services/app-settings.service';
-import * as nanocurrency from 'nanocurrency';
 import {PriceService} from '../../services/price.service';
 import { BigNumber } from 'bignumber.js';
 import {NotificationService} from '../../services/notification.service';
@@ -12,7 +11,7 @@ import {NotificationService} from '../../services/notification.service';
   styleUrls: ['./converter.component.less']
 })
 export class ConverterComponent implements OnInit, OnDestroy {
-  Mnano = '1';
+  Mban = '1';
   raw = '';
   invalidMnano = false;
   invalidRaw = false;
@@ -29,13 +28,13 @@ export class ConverterComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     BigNumber.config({ DECIMAL_PLACES: 30 });
-    this.Mnano = '1';
+    this.Mban = '1';
 
     this.priceSub = this.price.lastPrice$.subscribe(event => {
-      this.fiatPrice = (new BigNumber(this.Mnano)).times(this.price.price.lastPrice).toString();
+      this.fiatPrice = (new BigNumber(this.Mban)).times(this.price.price.lastPrice).toString();
     });
 
-    this.unitChange('mnano');
+    this.unitChange('mban');
   }
 
   ngOnDestroy() {
@@ -47,9 +46,10 @@ export class ConverterComponent implements OnInit, OnDestroy {
   unitChange(unit) {
     switch (unit) {
       case 'mnano':
-        if (this.util.account.isValidNanoAmount(this.Mnano)) {
-          this.raw = nanocurrency.convert(this.Mnano, {from: nanocurrency.Unit.NANO, to: nanocurrency.Unit.raw});
-          this.fiatPrice = (new BigNumber(this.Mnano)).times(this.price.price.lastPrice).toString(10);
+      case 'mban':
+        if (this.util.account.isValidBanAmount(this.Mban)) {
+          this.raw = this.util.nano.mnanoToRaw(this.Mban).toString(10);
+          this.fiatPrice = (new BigNumber(this.Mban)).times(this.price.price.lastPrice).toString(10);
           this.invalidMnano = false;
           this.invalidRaw = false;
           this.invalidFiat = false;
@@ -61,26 +61,26 @@ export class ConverterComponent implements OnInit, OnDestroy {
         break;
       case 'raw':
         if (this.util.account.isValidAmount(this.raw)) {
-          this.Mnano = nanocurrency.convert(this.raw, {from: nanocurrency.Unit.raw, to: nanocurrency.Unit.NANO});
-          this.fiatPrice = (new BigNumber(this.Mnano)).times(this.price.price.lastPrice).toString(10);
+          this.Mban = this.util.nano.rawToMnano(this.raw).toString(10);
+          this.fiatPrice = (new BigNumber(this.Mban)).times(this.price.price.lastPrice).toString(10);
           this.invalidRaw = false;
           this.invalidMnano = false;
           this.invalidFiat = false;
         } else {
-          this.Mnano = '';
+          this.Mban = '';
           this.fiatPrice = '';
           this.invalidRaw = true;
         }
         break;
       case 'fiat':
         if (this.util.string.isNumeric(this.fiatPrice)) {
-          this.Mnano = (new BigNumber(this.fiatPrice)).dividedBy(this.price.price.lastPrice).toString(10);
-          this.raw = nanocurrency.convert(this.Mnano, {from: nanocurrency.Unit.NANO, to: nanocurrency.Unit.raw});
+          this.Mban = (new BigNumber(this.fiatPrice)).dividedBy(this.price.price.lastPrice).toString(10);
+          this.raw = this.util.nano.mnanoToRaw(this.Mban).toString(10);
           this.invalidRaw = false;
           this.invalidMnano = false;
           this.invalidFiat = false;
         } else {
-          this.Mnano = '';
+          this.Mban = '';
           this.raw = '';
           this.invalidFiat = true;
         }

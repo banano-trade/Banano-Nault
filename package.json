@@ -1,9 +1,9 @@
 {
-  "name": "nault",
+  "name": "banano-nault",
   "version": "1.18.3",
   "license": "MIT",
-  "description": "Wallet for interacting with nano",
-  "author": "The Nano Community / Andrew Steele",
+  "description": "Wallet for interacting with Banano",
+  "author": "The Banano Community / Andrew Steele",
   "main": "desktop-app/dist/desktop-app.js",
   "scripts": {
     "ng": "ng",
@@ -118,8 +118,8 @@
   "build": {
     "appId": "cc.nault",
     "buildVersion": "1.0.0",
-    "productName": "Nault",
-    "copyright": "Copyright © 2020 The Nano Community / Andrew Steele",
+    "productName": "Banano Nault",
+    "copyright": "Copyright ?? 2020 The Banano Community / Andrew Steele",
     "directories": {
       "output": "desktop-app/build",
       "buildResources": "desktop-app/assets",
@@ -131,9 +131,9 @@
       "extendInfo": {
         "CFBundleURLTypes": [
           {
-            "CFBundleURLName": "nano",
+            "CFBundleURLName": "banano",
             "CFBundleURLSchemes": [
-              "nano"
+              "ban"
             ]
           }
         ]
@@ -143,18 +143,18 @@
       "target": "AppImage",
       "icon": "desktop-app/assets/linux",
       "desktop": {
-        "GenericName": "Nano Wallet"
+        "GenericName": "Banano Wallet"
       }
     },
     "protocols": {
-      "name": "nano",
+      "name": "ban",
       "schemes": [
-        "nano",
-        "nanorep",
-        "nanoseed",
-        "nanokey",
-        "nanosign",
-        "nanoprocess"
+        "ban",
+        "banrep",
+        "banseed",
+        "bankey",
+        "bansign",
+        "banprocess"
       ],
       "role": "Viewer"
     }

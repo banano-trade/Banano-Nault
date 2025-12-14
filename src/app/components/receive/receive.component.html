@@ -64,7 +64,7 @@
               <div class="form-account">
                 <select id="form-horizontal-select" class="uk-select" [(ngModel)]="pendingAccountModel" (change)="onSelectedAccountChange(pendingAccountModel)">
                   <option [value]="0">All Accounts</option>
-                  <option *ngFor="let account of accounts" [value]="account.id">{{account.addressBookName ? account.addressBookName + ' - ' : '#' + account.index + ' - ' }} {{ account.id | squeeze }} ({{ account.balance | rai: 'mnano,true' | amountsplit: 0 }}{{ account.balance | rai: 'mnano,true' | amountsplit: 1 }} XNO)</option>
+                  <option *ngFor="let account of accounts" [value]="account.id">{{account.addressBookName ? account.addressBookName + ' - ' : '#' + account.index + ' - ' }} {{ account.id | squeeze }} ({{ account.balance | rai: 'mnano,true' | amountsplit: 0 }}{{ account.balance | rai: 'mnano,true' | amountsplit: 1 }} BAN)</option>
                 </select>
               </div>
             </div>
@@ -73,12 +73,12 @@
               <label for="form-horizontal-amount" class="uk-form-label label-block">Requested Amount <span class="uk-text-muted label-optional">optional</span></label>
               <div class="form-amount">
                 <div class="uk-width-1-1 uk-inline">
-                  <label class="uk-form-icon uk-link-reset uk-link-muted xno-symbol" for="form-horizontal-amount"></label>
-                  <input [(ngModel)]="amountNano" [ngClass]="{ 'uk-form-danger': !validNano }" [attr.disabled]="pendingAccountModel == '0' || null" autocomplete="off" class="uk-input" id="form-horizontal-amount" (input)="nanoAmountChange()" style="padding-left: 52px !important;" type="number" step="any" placeholder="Amount of XNO" maxlength="40">
+                  <label class="uk-form-icon uk-link-reset uk-link-muted ban-symbol" for="form-horizontal-amount"></label>
+                  <input [(ngModel)]="amountNano" [ngClass]="{ 'uk-form-danger': !validNano }" [attr.disabled]="pendingAccountModel == '0' || null" autocomplete="off" class="uk-input" id="form-horizontal-amount" (input)="nanoAmountChange()" style="padding-left: 52px !important;" type="number" step="any" placeholder="Amount of BAN" maxlength="40">
                 </div>
                 <div style="margin-top: 10px;" *ngIf="settings.settings.displayCurrency">
                   <div class="uk-width-1-1 uk-inline">
-                    <a class="uk-form-icon uk-link-reset uk-link-muted fiat-currency-ticker" uk-tooltip title="Last Price: {{ price.price.lastPrice | fiat: settings.settings.displayCurrency }} / XNO">{{ settings.settings.displayCurrency | currencySymbol }}</a>
+                    <a class="uk-form-icon uk-link-reset uk-link-muted fiat-currency-ticker" uk-tooltip title="Last Price: {{ price.price.lastPrice | fiat: settings.settings.displayCurrency }} / BAN">{{ settings.settings.displayCurrency | currencySymbol }}</a>
                     <input [(ngModel)]="amountFiat" [ngClass]="{ 'uk-form-danger': !validFiat }" [attr.disabled]="pendingAccountModel == '0' || null" autocomplete="off" (input)="fiatAmountChange()" style="padding-left: 52px !important;" class="uk-input" id="form-horizontal-text-fiat" type="number" step="any" placeholder="Amount of {{ settings.settings.displayCurrency }}">
                   </div>
                 </div>
@@ -253,7 +253,7 @@
               <span class="uk-text-small">Ready to receive</span><br>
               <span class="amount-integer">{{ pending.amount | rai: 'mnano,true' | amountsplit: 0 }}</span>
               <span class="amount-fractional">{{ pending.amount | rai: 'mnano,true' | amountsplit: 1 }}</span>
-              <span class="currency-name">XNO</span>
+              <span class="currency-name">BAN</span>
               <div class="compact-actions-date">
                 <ng-template [ngTemplateOutlet]="transactionActions"></ng-template>
               </div>
@@ -277,7 +277,7 @@
         <table class="uk-table uk-table-striped uk-table-small" *ngIf="settings.settings.minimumReceive">
           <thead>
             <tr class="uk-alert uk-alert-primary missing-accounts-hint">
-              <td colspan="4" style="text-align: center;"><span uk-icon="icon: info"></span> Minimum Receive is set to <a class="hint-action" routerLink="/configure-app" routerLinkActive="active" *ngIf="( util.nano.mnanoToRaw(this.settings.settings.minimumReceive).toFixed().length > 24 ) else amountInRaw">{{ util.nano.mnanoToRaw(this.settings.settings.minimumReceive).toFixed() | rai: 'mnano,true' | amountsplit: 0 }}{{ util.nano.mnanoToRaw(this.settings.settings.minimumReceive).toFixed() | rai: 'mnano,true' | amountsplit: 1 }} XNO</a><ng-template #amountInRaw><a class="hint-action" routerLink="/configure-app" routerLinkActive="active">{{ util.nano.mnanoToRaw(this.settings.settings.minimumReceive).toFixed() }} raw</a></ng-template>, transactions below this amount will be hidden.</td>
+              <td colspan="4" style="text-align: center;"><span uk-icon="icon: info"></span> Minimum Receive is set to <a class="hint-action" routerLink="/configure-app" routerLinkActive="active" *ngIf="( util.nano.mnanoToRaw(this.settings.settings.minimumReceive).toFixed().length > 24 ) else amountInRaw">{{ util.nano.mnanoToRaw(this.settings.settings.minimumReceive).toFixed() | rai: 'mnano,true' | amountsplit: 0 }}{{ util.nano.mnanoToRaw(this.settings.settings.minimumReceive).toFixed() | rai: 'mnano,true' | amountsplit: 1 }} BAN</a><ng-template #amountInRaw><a class="hint-action" routerLink="/configure-app" routerLinkActive="active">{{ util.nano.mnanoToRaw(this.settings.settings.minimumReceive).toFixed() }} raw</a></ng-template>, transactions below this amount will be hidden.</td>
             </tr>
           </thead>
         </table>
@@ -384,13 +384,13 @@
             <p class="uk-text-large">Enter the <span class="uk-text-primary">requested amount</span></p>
             <div class="form-amount">
               <div class="uk-width-1-1 uk-inline">
-                <label class="uk-form-icon uk-link-reset uk-link-muted xno-symbol" for="form-horizontal-amount"></label>
-                <input [(ngModel)]="amountNano" [ngClass]="{ 'uk-form-danger': !validNano }" [attr.disabled]="pendingAccountModel == '0' || null" autocomplete="off" class="uk-input" id="form-horizontal-amount" (input)="nanoAmountChange()" style="padding-left: 52px !important;" type="number" step="any" placeholder="Amount of XNO" maxlength="40">
+                <label class="uk-form-icon uk-link-reset uk-link-muted ban-symbol" for="form-horizontal-amount"></label>
+                <input [(ngModel)]="amountNano" [ngClass]="{ 'uk-form-danger': !validNano }" [attr.disabled]="pendingAccountModel == '0' || null" autocomplete="off" class="uk-input" id="form-horizontal-amount" (input)="nanoAmountChange()" style="padding-left: 52px !important;" type="number" step="any" placeholder="Amount of BAN" maxlength="40">
               </div>
               <div style="margin-top: 10px;" *ngIf="settings.settings.displayCurrency">
                 <p class="text-half-muted" style="margin: 0 0 14px 0;">or</p>
                 <div class="uk-width-1-1 uk-inline">
-                  <a class="uk-form-icon uk-link-reset uk-link-muted fiat-currency-ticker" uk-tooltip title="Last Price: {{ price.price.lastPrice | fiat: settings.settings.displayCurrency }} / XNO">{{ settings.settings.displayCurrency | currencySymbol }}</a>
+                  <a class="uk-form-icon uk-link-reset uk-link-muted fiat-currency-ticker" uk-tooltip title="Last Price: {{ price.price.lastPrice | fiat: settings.settings.displayCurrency }} / BAN">{{ settings.settings.displayCurrency | currencySymbol }}</a>
                   <input [(ngModel)]="amountFiat" [ngClass]="{ 'uk-form-danger': !validFiat }" [attr.disabled]="pendingAccountModel == '0' || null" autocomplete="off" (input)="fiatAmountChange()" style="padding-left: 52px !important;" class="uk-input" id="form-horizontal-text-fiat" type="number" step="any" placeholder="Amount of {{ settings.settings.displayCurrency }}">
                 </div>
               </div>
@@ -409,7 +409,7 @@
       <ng-container *ngIf="(inMerchantModeQR === true)">
         <p class="uk-text-large uk-margin-remove-bottom">Send</p>
         <p class="uk-text-large uk-text-primary uk-margin-remove-top" *ngIf="(amountNano === '')">
-          <span class="merchant-mode-currency-name">XNO</span>
+          <span class="merchant-mode-currency-name">BAN</span>
         </p>
         <p class="uk-text-large uk-text-primary uk-margin-remove-top" *ngIf="(amountNano !== '')">
           <span
@@ -418,7 +418,7 @@
           <span
             class="merchant-mode-amount-fractional"
           >{{ merchantModeRawRequestedQR | rai: 'mnano,true' | amountsplit: 1 }}</span>
-          <span class="merchant-mode-currency-name merchant-mode-currency-margin">XNO</span>
+          <span class="merchant-mode-currency-name merchant-mode-currency-margin">BAN</span>
         </p>
         <p class="text-half-muted" style="margin: -16px 0 10px 0;">to</p>
         <app-nano-account-id
@@ -467,7 +467,7 @@
               <span
                 class="merchant-mode-amount-fractional"
               >{{ prompt.amountRaw | rai: 'mnano,true' | amountsplit: 1 }}</span>
-              <span class="merchant-mode-currency-name merchant-mode-currency-margin">XNO</span>
+              <span class="merchant-mode-currency-name merchant-mode-currency-margin">BAN</span>
             </p>
             <div
               *ngIf="prompt.amountHiddenRaw.gt(0)"
@@ -537,7 +537,7 @@
           <span
             class="merchant-mode-amount-fractional"
           >{{ merchantModeRawReceivedTotal | rai: 'mnano,true' | amountsplit: 1 }}</span>
-          <span class="merchant-mode-currency-name merchant-mode-currency-margin">XNO</span>
+          <span class="merchant-mode-currency-name merchant-mode-currency-margin">BAN</span>
         </p>
         <div
           *ngIf="merchantModeRawReceivedTotalHiddenRaw.gt(0)"
@@ -556,12 +556,12 @@
                   'Amount Requested: '
                 + ( merchantModeRawRequestedTotal | rai: 'mnano,true' | amountsplit: 0 )
                 + ( merchantModeRawRequestedTotal | rai: 'mnano,true' | amountsplit: 1 )
-                + ' XNO'
+                + ' BAN'
                 + '\n\n'
                 + 'Amount Paid: '
                 + ( merchantModeRawReceivedTotal | rai: 'mnano,true' | amountsplit: 0 )
                 + ( merchantModeRawReceivedTotal | rai: 'mnano,true' | amountsplit: 1 )
-                + ' XNO'
+                + ' BAN'
                 + '\n\n'
                 + 'Transaction ID\'s:'
                 + '\n- '

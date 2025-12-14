@@ -33,15 +33,15 @@ interface AppSettings {
 
 @Injectable()
 export class AppSettingsService {
-  storeKey = `nanovault-appsettings`;
+  storeKey = `banvault-appsettings`;
 
   settings: AppSettings = {
     language: null,
-    displayDenomination: 'mnano',
+    displayDenomination: 'mban',
     // displayPrefix: 'xrb',
     walletStore: 'localStorage',
     displayCurrency: 'USD',
-    defaultRepresentative: null,
+    defaultRepresentative: 'ban_1hootubxy68fhhrctjmaias148tz91tsse3pq1pgmfedsm3cubhobuihqnxd',
     lockOnClose: 1,
     lockInactivityMinutes: 30,
     ledgerReconnect: 'usb',
@@ -70,42 +70,34 @@ export class AppSettingsService {
       shouldRandom: false,
     },
     {
-      name: 'XNOPay UK 1',
-      value: 'xnopay-uk-1',
-      api: 'https://uk1.public.xnopay.com/proxy',
-      ws: 'wss://uk1.public.xnopay.com/ws',
+      name: 'Banano Trade',
+      value: 'banano-trade',
+      api: 'https://api.banano.trade/proxy',
+      ws: 'wss://ws.banano.trade',
       auth: null,
       shouldRandom: true,
     },
     {
-      name: 'Rainstorm City',
-      value: 'rainstorm',
-      api: 'https://rainstorm.city/api',
-      ws: 'wss://rainstorm.city/websocket',
+      name: 'Banano Booster',
+      value: 'banano-booster',
+      api: 'https://booster.dev-ptera.com/banano-rpc',
+      ws: 'wss://ws2.banano.trade',
       auth: null,
       shouldRandom: true,
     },
     {
-      name: 'NanOslo',
-      value: 'nanoslo',
-      api: 'https://nanoslo.0x.no/proxy',
-      ws: 'wss://nanoslo.0x.no/websocket',
+      name: 'Kalium',
+      value: 'kalium',
+      api: 'https://kaliumapi.appditto.com/api',
+      ws: null,
       auth: null,
       shouldRandom: true,
     },
     {
-      name: 'SomeNano',
-      value: 'somenano',
-      api: 'https://node.somenano.com/proxy',
-      ws: 'wss://node.somenano.com/websocket',
-      auth: null,
-      shouldRandom: true,
-    },
-    {
-      name: 'SpyNano (New Node - Use with caution)',
-      value: 'spynano',
-      api: 'https://node.spynano.org/proxy',
-      ws: 'wss://node.spynano.org/websocket',
+      name: 'JungleTV',
+      value: 'jungletv',
+      api: 'https://public.node.jungletv.live/rpc',
+      ws: 'wss://ws.spyglass.eule.wtf',
       auth: null,
       shouldRandom: false,
     },
@@ -133,7 +125,7 @@ export class AppSettingsService {
     acc.push( server.api.replace(/https?:\/\//g, '') );
     return acc;
   }, [
-    'node.somenano.com'
+    'api.banano.trade'
   ]);
 
   constructor(
@@ -142,9 +134,11 @@ export class AppSettingsService {
 
   loadAppSettings() {
     let settings: AppSettings = this.settings;
-    const settingsStore = localStorage.getItem(this.storeKey);
+    const settingsStore = localStorage.getItem(this.storeKey) || localStorage.getItem('nanovault-appsettings');
     if (settingsStore) {
       settings = JSON.parse(settingsStore);
+      // migrate old key to new namespace
+      localStorage.setItem(this.storeKey, settingsStore);
     }
     this.settings = Object.assign(this.settings, settings);
 
@@ -222,11 +216,11 @@ export class AppSettingsService {
     localStorage.removeItem(this.storeKey);
     this.settings = {
       language: 'en',
-      displayDenomination: 'mnano',
+      displayDenomination: 'mban',
       // displayPrefix: 'xrb',
       walletStore: 'localStorage',
       displayCurrency: 'USD',
-      defaultRepresentative: null,
+      defaultRepresentative: 'ban_1hootubxy68fhhrctjmaias148tz91tsse3pq1pgmfedsm3cubhobuihqnxd',
       lockOnClose: 1,
       lockInactivityMinutes: 30,
       ledgerReconnect: 'usb',

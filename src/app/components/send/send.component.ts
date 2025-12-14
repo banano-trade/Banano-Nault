@@ -25,7 +25,7 @@ const nacl = window['nacl'];
   styleUrls: ['./send.component.css']
 })
 export class SendComponent implements OnInit {
-  nano = 1000000000000000000000000;
+  nano = new BigNumber('1e23');
 
   activePanel = 'send';
   sendDestinationType = 'external-address';
@@ -56,9 +56,9 @@ export class SendComponent implements OnInit {
   addressAliasMatch = '';
 
   amounts = [
-    { name: 'XNO', shortName: 'XNO', value: 'mnano' },
-    { name: 'knano', shortName: 'knano', value: 'knano' },
-    { name: 'nano', shortName: 'nano', value: 'nano' },
+    { name: 'BAN', shortName: 'BAN', value: 'mban' },
+    { name: 'kBAN', shortName: 'kBAN', value: 'kban' },
+    { name: 'banoshi', shortName: 'ban', value: 'ban' },
   ];
   selectedAmount = this.amounts[0];
 
@@ -225,31 +225,24 @@ export class SendComponent implements OnInit {
 
     const destinationAddress = this.toAccountID || '';
 
-    const nanoURIScheme = /^nano:.+$/g;
+    const nanoURIScheme = /^(ban|nano):.+$/g;
     const isNanoURI = nanoURIScheme.test(destinationAddress);
 
     if (isNanoURI === true) {
       const url = new URL(destinationAddress);
 
-      if (this.util.account.isValidAccount(url.pathname)) {
+      const targetAccount = this.util.account.setPrefix(url.pathname, 'ban');
+
+      if (this.util.account.isValidAccount(targetAccount)) {
         const amountAsRaw = url.searchParams.get('amount');
 
-        const amountAsXNO = (
-            amountAsRaw
-          ? nanocurrency.convert(
-              amountAsRaw, {
-                from: nanocurrency.Unit.raw,
-                to: nanocurrency.Unit.NANO
-              }
-            ).toString()
-          : null
-        );
+        const amountAsBan = amountAsRaw ? this.util.nano.rawToMnano(amountAsRaw).toString(10) : null;
 
         setTimeout(
           () => {
             this.updateQueries({
-              to: url.pathname,
-              amount: amountAsXNO,
+              to: targetAccount,
+              amount: amountAsBan,
             });
           },
           10
@@ -559,7 +552,7 @@ export class SendComponent implements OnInit {
       return this.notificationService.sendWarning(`From and to account are required`);
     }
     if (!this.validateAmount()) {
-      return this.notificationService.sendWarning(`Invalid XNO amount`);
+      return this.notificationService.sendWarning(`Invalid BAN amount`);
     }
 
     this.preparingTransaction = true;
@@ -588,7 +581,7 @@ export class SendComponent implements OnInit {
       return this.notificationService.sendWarning(`Amount is invalid`);
     }
     if (from.balanceBN.minus(rawAmount).lessThan(0)) {
-      return this.notificationService.sendError(`From account does not have enough XNO`);
+      return this.notificationService.sendError(`From account does not have enough BAN`);
     }
 
     // Determine a proper raw amount to show in the UI, if a decimal was entered
@@ -683,8 +676,11 @@ export class SendComponent implements OnInit {
 
     switch (this.selectedAmount.value) {
       default:
+      case 'ban':
       case 'nano': return this.util.nano.nanoToRaw(value);
+      case 'kban':
       case 'knano': return this.util.nano.knanoToRaw(value);
+      case 'mban':
       case 'mnano': return this.util.nano.mnanoToRaw(value);
     }
   }
@@ -692,8 +688,11 @@ export class SendComponent implements OnInit {
   getAmountValueFromBase(value) {
     switch (this.selectedAmount.value) {
       default:
+      case 'ban':
       case 'nano': return this.util.nano.rawToNano(value);
+      case 'kban':
       case 'knano': return this.util.nano.rawToKnano(value);
+      case 'mban':
       case 'mnano': return this.util.nano.rawToMnano(value);
     }
   }

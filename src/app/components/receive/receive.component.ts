@@ -24,7 +24,7 @@ import { TranslocoService } from '@ngneat/transloco';
 
 
 export class ReceiveComponent implements OnInit, OnDestroy {
-  nano = 1000000000000000000000000;
+  nano = new BigNumber('1e23');
   accounts = this.walletService.wallet.accounts;
 
   timeoutIdClearingRecentlyCopiedState: any = null;
@@ -298,7 +298,8 @@ export class ReceiveComponent implements OnInit, OnDestroy {
     if (account.length > 1) {
       this.qrAccount = account;
       this.qrCodeImage = null;
-      this.qrCodeUri = `nano:${account}${this.qrAmount ? `?amount=${this.qrAmount.toString(10)}` : ''}`;
+      const banAccount = this.util.account.setPrefix(account, 'ban');
+      this.qrCodeUri = `ban:${banAccount}${this.qrAmount ? `?amount=${this.qrAmount.toString(10)}` : ''}`;
       qrCode = await QRCode.toDataURL(this.qrCodeUri, {scale: 7});
     }
     this.qrCodeImage = qrCode;
@@ -314,7 +315,8 @@ export class ReceiveComponent implements OnInit, OnDestroy {
     }
     if (this.qrAccount.length > 1) {
       this.qrCodeImage = null;
-      this.qrCodeUri = `nano:${this.qrAccount}${this.qrAmount ? `?amount=${this.qrAmount.toString(10)}` : ''}`;
+      const banAccount = this.util.account.setPrefix(this.qrAccount, 'ban');
+      this.qrCodeUri = `ban:${banAccount}${this.qrAmount ? `?amount=${this.qrAmount.toString(10)}` : ''}`;
       qrCode = await QRCode.toDataURL(this.qrCodeUri, {scale: 7});
       this.qrCodeImage = qrCode;
     }
@@ -372,7 +374,7 @@ export class ReceiveComponent implements OnInit, OnDestroy {
       receivableBlock.received = true;
       this.mobileTransactionMenuModal.hide();
       this.notificationService.removeNotification('success-receive');
-      this.notificationService.sendSuccess(`Successfully received nano!`, { identifier: 'success-receive' });
+      this.notificationService.sendSuccess(`Successfully received Banano!`, { identifier: 'success-receive' });
       // pending has been processed, can be removed from the list
       // list also updated with reloadBalances but not if called too fast
       this.walletService.removePendingBlock(receivableBlock.hash);

@@ -93,8 +93,8 @@ export interface WalletApiAccount extends BaseApiAccount {
 
 @Injectable()
 export class WalletService {
-  nano = 1000000000000000000000000;
-  storeKey = `nanovault-wallet`;
+  nano = new BigNumber('1e23');
+  storeKey = `banvault-wallet`;
 
   wallet: FullWallet = {
     type: 'seed',
@@ -214,17 +214,17 @@ export class WalletService {
           if (transaction.block.subtype === 'send') {
             // Incoming transaction
             if (this.addressBook.getTransactionTrackingById(addressLink)) {
-              this.notifications.sendInfo(`Tracked address ${accountHrefLink} can now receive ${trackedAmount} XNO`, { length: 10000 });
+              this.notifications.sendInfo(`Tracked address ${accountHrefLink} can now receive ${trackedAmount} BAN`, { length: 10000 });
               console.log(`Tracked incoming block to: ${address} - Ӿ${trackedAmount}`);
             }
             // Outgoing transaction
             if (this.addressBook.getTransactionTrackingById(address)) {
-              this.notifications.sendInfo(`Tracked address ${accountHref} sent ${trackedAmount} XNO`, { length: 10000 });
+              this.notifications.sendInfo(`Tracked address ${accountHref} sent ${trackedAmount} BAN`, { length: 10000 });
               console.log(`Tracked send block from: ${address} - Ӿ${trackedAmount}`);
             }
           } else if (transaction.block.subtype === 'receive' && this.addressBook.getTransactionTrackingById(address)) {
             // Receive transaction
-            this.notifications.sendInfo(`Tracked address ${accountHref} received incoming ${trackedAmount} XNO`, { length: 10000 });
+            this.notifications.sendInfo(`Tracked address ${accountHref} received incoming ${trackedAmount} BAN`, { length: 10000 });
             console.log(`Tracked receive block to: ${address} - Ӿ${trackedAmount}`);
           } else if (transaction.block.subtype === 'change' && this.addressBook.getTransactionTrackingById(address)) {
             // Change transaction
@@ -304,29 +304,37 @@ export class WalletService {
   }
 
   getWalletAccount(accountID) {
-    return this.wallet.accounts.find(a => a.id === accountID);
+    const normalizedId = this.util.account.normalizeAccount((accountID || ''), 'ban');
+    const match = this.wallet.accounts.find(a => this.util.account.normalizeAccount((a.id || ''), 'ban') === normalizedId);
+    if (match) {
+      match.id = normalizedId;
+    }
+    return match;
   }
 
 
   async patchOldSavedData() {
-    // Look for saved accounts using an xrb_ prefix
-    const walletData = localStorage.getItem(this.storeKey);
+    // Look for saved accounts using legacy prefixes and normalize to ban_
+    const walletData = localStorage.getItem(this.storeKey) || localStorage.getItem('nanovault-wallet');
     if (!walletData) return;
 
     const walletJson = JSON.parse(walletData);
 
     if (walletJson.accounts) {
       const newAccounts = walletJson.accounts.map(account => {
-        if (account.id.indexOf('xrb_') !== -1) {
-          account.id = account.id.replace('xrb_', 'nano_');
-        }
-        return account;
+        const updatedId = this.util.account.setPrefix(account.id, 'ban');
+        return { ...account, id: updatedId };
       });
 
       walletJson.accounts = newAccounts;
     }
 
+    if (walletJson.selectedAccountId) {
+      walletJson.selectedAccountId = this.util.account.setPrefix(walletJson.selectedAccountId, 'ban');
+    }
+
     localStorage.setItem(this.storeKey, JSON.stringify(walletJson));
+    localStorage.removeItem('nanovault-wallet');
 
     return;
   }
@@ -334,10 +342,13 @@ export class WalletService {
   async loadStoredWallet() {
     this.resetWallet();
 
-    const walletData = localStorage.getItem(this.storeKey);
+    const walletData = localStorage.getItem(this.storeKey) || localStorage.getItem('nanovault-wallet');
     if (!walletData) return this.wallet;
 
     const walletJson = JSON.parse(walletData);
+    // migrate to new key namespace
+    localStorage.setItem(this.storeKey, walletData);
+    localStorage.removeItem('nanovault-wallet');
     const walletType = walletJson.type || 'seed';
     this.wallet.type = walletType;
     if (walletType === 'seed' || walletType === 'privateKey' || walletType === 'expandedKey') {
@@ -354,7 +365,7 @@ export class WalletService {
       walletJson.accounts.forEach(account => this.loadWalletAccount(account.index, account.id));
     }
 
-    this.wallet.selectedAccountId = walletJson.selectedAccountId || null;
+    this.wallet.selectedAccountId = walletJson.selectedAccountId ? this.util.account.normalizeAccount(walletJson.selectedAccountId, 'ban') : null;
 
     return this.wallet;
   }
@@ -515,7 +526,7 @@ export class WalletService {
 
         } else if (this.wallet.type === 'ledger') {
           const account: any = await this.ledgerService.getLedgerAccount(index);
-          accountAddress = account.address.replace('xrb_', 'nano_');
+          accountAddress = this.util.account.setPrefix(account.address, 'ban');
           accountPublicKey = account.publicKey.toUpperCase();
 
         } else {
@@ -597,7 +608,7 @@ export class WalletService {
     const account: any = await this.ledgerService.getLedgerAccount(index);
 
     const accountID = account.address;
-    const nanoAccountID = accountID.replace('xrb_', 'nano_');
+    const nanoAccountID = this.util.account.setPrefix(accountID, 'ban');
     const addressBookName = this.addressBook.getAccountName(nanoAccountID);
 
     const newAccount: WalletAccount = {
@@ -621,10 +632,11 @@ export class WalletService {
 
   createKeyedAccount(index, accountBytes, accountKeyPair) {
     const accountName = this.util.account.getPublicAccountID(accountKeyPair.publicKey);
-    const addressBookName = this.addressBook.getAccountName(accountName);
+    const normalizedAccount = this.util.account.normalizeAccount(accountName, 'ban');
+    const addressBookName = this.addressBook.getAccountName(normalizedAccount);
 
     const newAccount: WalletAccount = {
-      id: accountName,
+      id: normalizedAccount,
       frontier: null,
       secret: accountBytes,
       keyPair: accountKeyPair,
@@ -745,6 +757,8 @@ export class WalletService {
     this.wallet.updatingBalance = true;
     const fiatPrice = this.price.price.lastPrice;
 
+    this.wallet.accounts.forEach(a => a.id = this.util.account.normalizeAccount((a.id || ''), 'ban'));
+
     const accountIDs = this.wallet.accounts.map(a => a.id);
     const accounts = await this.api.accountsBalances(accountIDs);
     const frontiers = await this.api.accountsFrontiers(accountIDs);
@@ -810,7 +824,12 @@ export class WalletService {
             continue;
           }
 
-          const walletAccount = this.wallet.accounts.find(a => a.id === block);
+          const walletAccount = this.wallet.accounts.find(
+            a => this.util.account.normalizeAccount((a.id || ''), 'ban') === this.util.account.normalizeAccount(block, 'ban')
+          );
+          if (!walletAccount) continue;
+          walletAccount.id = this.util.account.normalizeAccount(walletAccount.id, 'ban');
+          if (!this.util.account.isValidAccount(walletAccount.id)) continue;
 
           if (pending.blocks[block]) {
             let accountPending = new BigNumber(0);
@@ -842,13 +861,20 @@ export class WalletService {
             if (walletAccount.pending.gt(0)) {
               console.log('Adding single pending account within limit to work cache');
               // Use frontier or public key if open block
-              const hash = walletAccount.frontier || this.util.account.getAccountPublicKey(walletAccount.id);
-              // Technically should be 1/64 multiplier here but since we don't know if the pending will be received before
-              // a send or change block is made it's safer to use 1x PoW threshold to be sure the cache will work.
-              // On the other hand, it may be more efficient to use 1/64 and simply let the work cache rework
-              // in case a send is made instead. The typical user scenario would be to let the wallet auto receive first
-              this.workPool.addWorkToCache(hash, 1 / 64);
-              walletAccount.receivePow = true;
+              let hash = null;
+              try {
+                hash = walletAccount.frontier || this.util.account.getAccountPublicKey(walletAccount.id);
+              } catch (err) {
+                console.warn('Skipping PoW cache for invalid account id', walletAccount.id);
+              }
+              if (hash) {
+                // Technically should be 1/64 multiplier here but since we don't know if the pending will be received before
+                // a send or change block is made it's safer to use 1x PoW threshold to be sure the cache will work.
+                // On the other hand, it may be more efficient to use 1/64 and simply let the work cache rework
+                // in case a send is made instead. The typical user scenario would be to let the wallet auto receive first
+                this.workPool.addWorkToCache(hash, 1 / 64);
+                walletAccount.receivePow = true;
+              }
             } else {
               walletAccount.receivePow = false;
             }
@@ -875,8 +901,16 @@ export class WalletService {
 
     // Make sure any frontiers are in the work pool
     // If they have no frontier, we want to use their pub key?
-    const hashes = this.wallet.accounts.filter(account => (account.receivePow === false)).
-      map(account => account.frontier || this.util.account.getAccountPublicKey(account.id));
+    const hashes = this.wallet.accounts
+      .filter(account => (account.receivePow === false))
+      .map(account => {
+        const normalizedId = this.util.account.setPrefix(account.id, 'ban');
+        // keep account ids normalized for future operations
+        account.id = normalizedId;
+        if (!this.util.account.isValidAccount(normalizedId)) return null;
+        return account.frontier || this.util.account.getAccountPublicKey(normalizedId);
+      })
+      .filter(hash => !!hash);
     console.log('Adding non-pending frontiers to work cache');
     hashes.forEach(hash => this.workPool.addWorkToCache(hash, 1)); // use high pow here since we don't know what tx type will be next
 
@@ -903,10 +937,11 @@ export class WalletService {
 
   async loadWalletAccount(accountIndex, accountID) {
     const index = accountIndex;
-    const addressBookName = this.addressBook.getAccountName(accountID);
+    const normalizedId = this.util.account.normalizeAccount(accountID, 'ban');
+    const addressBookName = this.addressBook.getAccountName(normalizedId);
 
     const newAccount: WalletAccount = {
-      id: accountID,
+      id: normalizedId,
       frontier: null,
       secret: null,
       keyPair: null,
@@ -922,7 +957,7 @@ export class WalletService {
     };
 
     this.wallet.accounts.push(newAccount);
-    this.websocket.subscribeAccounts([accountID]);
+    this.websocket.subscribeAccounts([normalizedId]);
 
     return newAccount;
   }
@@ -993,15 +1028,21 @@ export class WalletService {
   }
 
   addPendingBlock(accountID, blockHash, amount, source) {
+    const normalizedAccount = this.util.account.setPrefix(accountID, 'ban');
+    if (!this.util.account.isValidAccount(normalizedAccount)) {
+      console.warn('Skipping pending block for invalid account', accountID);
+      return false;
+    }
+
     if (this.successfulBlocks.indexOf(blockHash) !== -1) return false; // Already successful with this block
 
     const existingHash = this.wallet.pendingBlocks.find(b => b.hash === blockHash);
 
     if (existingHash) return false; // Already added
 
-    this.wallet.pendingBlocks.push({ account: accountID, hash: blockHash, amount: amount, source: source });
+    this.wallet.pendingBlocks.push({ account: normalizedAccount, hash: blockHash, amount: amount, source: source });
     this.wallet.pendingBlocksUpdate$.next({
-      account: accountID,
+      account: normalizedAccount,
       sourceHash: blockHash,
       destinationHash: null,
       hasBeenReceived: false,
@@ -1054,7 +1095,7 @@ export class WalletService {
 
       const receiveAmount = this.util.nano.rawToMnano(nextBlock.amount);
       this.notifications.removeNotification('success-receive');
-      this.notifications.sendSuccess(`Successfully received ${receiveAmount.isZero() ? '' : this.noZerosPipe.transform(receiveAmount.toFixed(6)) } XNO!`, { identifier: 'success-receive' });
+      this.notifications.sendSuccess(`Successfully received ${receiveAmount.isZero() ? '' : this.noZerosPipe.transform(receiveAmount.toFixed(6)) } BAN!`, { identifier: 'success-receive' });
 
       // remove after processing
       // list also updated with reloadBalances but not if called too fast

@@ -4,8 +4,8 @@ import {BehaviorSubject} from 'rxjs';
 
 @Injectable()
 export class PriceService {
-  storeKey = `nanovault-price`;
-  apiUrl = `https://api.coingecko.com/api/v3/coins/nano?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`;
+  storeKey = `banvault-price`;
+  apiUrl = `https://api.coingecko.com/api/v3/coins/banano?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`;
 
   price = {
     lastPrice: 0,
@@ -39,10 +39,12 @@ export class PriceService {
   }
 
   loadSavedPrice() {
-    const priceData = localStorage.getItem(this.storeKey);
+    const priceData = localStorage.getItem(this.storeKey) || localStorage.getItem('nanovault-price');
     if (!priceData) return false;
 
     this.price = JSON.parse(priceData);
+    localStorage.setItem(this.storeKey, priceData);
+    localStorage.removeItem('nanovault-price');
   }
 
   savePrice() {

@@ -20,7 +20,7 @@ export class QrModalComponent implements OnInit {
   @Input() type: QRType;
   availableDevices: MediaDeviceInfo[];
   currentDevice: MediaDeviceInfo = null;
-  nano_scheme = /^(xrb|nano|nanorep|nanoseed|nanokey):.+$/g;
+  nano_scheme = /^(ban|banrep|banseed|bankey|nano|nanorep|nanoseed|nanokey|xrb):.+$/g;
 
   formatsEnabled: BarcodeFormat[] = [
     BarcodeFormat.CODE_128,
@@ -71,13 +71,14 @@ export class QrModalComponent implements OnInit {
       type = 'hash';
       content = resultString;
     } else if (this.nano_scheme.test(resultString)) {
-      // This is a valid Nano scheme URI
+      // This is a valid Banano scheme URI
       const url = new URL(resultString);
-      content = url.pathname;
+      const targetAccount = this.util.account.setPrefix(url.pathname, 'ban');
+      content = targetAccount;
 
-      if (['nano:', 'nanorep:', 'xrb:'].includes(url.protocol) && this.util.account.isValidAccount(url.pathname)) {
+      if (['ban:', 'banrep:', 'nano:', 'nanorep:', 'xrb:'].includes(url.protocol) && this.util.account.isValidAccount(targetAccount)) {
         type = 'account';
-      } else if (['nanoseed:', 'nanokey:'].includes(url.protocol) && this.util.nano.isValidHash(url.pathname)) {
+      } else if (['banseed:', 'bankey:', 'nanoseed:', 'nanokey:'].includes(url.protocol) && this.util.nano.isValidHash(url.pathname)) {
         type = 'hash';
       }
     } else {

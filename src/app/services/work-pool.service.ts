@@ -5,7 +5,7 @@ import {UtilService} from './util.service';
 
 @Injectable()
 export class WorkPoolService {
-  storeKey = `nanovault-workcache`;
+  storeKey = `banvault-workcache`;
 
   cacheLength = 25;
   workCache = [];
@@ -120,9 +120,11 @@ export class WorkPoolService {
    */
   public loadWorkCache() {
     let workCache = [];
-    const workCacheStore = localStorage.getItem(this.storeKey);
+    const workCacheStore = localStorage.getItem(this.storeKey) || localStorage.getItem('nanovault-workcache');
     if (workCacheStore) {
       workCache = JSON.parse(workCacheStore);
+      localStorage.setItem(this.storeKey, workCacheStore);
+      localStorage.removeItem('nanovault-workcache');
     }
     this.workCache = workCache;
 

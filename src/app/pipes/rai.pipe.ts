@@ -6,40 +6,43 @@ import { Pipe, PipeTransform } from '@angular/core';
 export class RaiPipe implements PipeTransform {
   precision = 6;
 
-  mrai = 1000000000000000000000000000000;
-  krai = 1000000000000000000000000000;
-  rai  = 1000000000000000000000000;
+  mban = 1e29; // 1 BAN
+  kban = 1e26; // 0.001 BAN
+  ban  = 1e23; // 0.000001 BAN
 
   transform(value: any, args?: any): any {
     const opts = args.split(',');
-    const denomination = opts[0] || 'mrai';
+    const denomination = opts[0] || 'mban';
     const hideText = opts[1] || false;
 
     switch (denomination.toLowerCase()) {
       default:
-      case 'xrb': return `${(value / this.mrai).toFixed(6)}${!hideText ? ' XNO' : ''}`;
-      case 'mnano':
-        const hasRawValue = (value / this.rai) % 1;
+      case 'xrb': return `${(value / this.mban).toFixed(6)}${!hideText ? ' BAN' : ''}`;
+      case 'mnano': // legacy aliases
+      case 'mban':
+        const hasRawValue = (value / this.ban) % 1;
         if (hasRawValue) {
           // New more precise toFixed function, but bugs on huge raw numbers
-          const newVal = value / this.mrai < 0.000001 ? 0 : value / this.mrai;
-          return `${this.toFixed(newVal, this.precision)}${!hideText ? ' XNO' : ''}`;
+          const newVal = value / this.mban < 0.000001 ? 0 : value / this.mban;
+          return `${this.toFixed(newVal, this.precision)}${!hideText ? ' BAN' : ''}`;
         } else {
-          return `${(value / this.mrai).toFixed(6)}${!hideText ? ' XNO' : ''}`;
+          return `${(value / this.mban).toFixed(6)}${!hideText ? ' BAN' : ''}`;
         }
-      case 'knano': return `${(value / this.krai).toFixed(3)}${!hideText ? ' knano' : ''}`;
-      case 'nano': return `${(value / this.rai).toFixed(0)}${!hideText ? ' nano' : ''}`;
+      case 'knano': // legacy aliases
+      case 'kban': return `${(value / this.kban).toFixed(3)}${!hideText ? ' kBAN' : ''}`;
+      case 'nano': // legacy aliases
+      case 'ban': return `${(value / this.ban).toFixed(0)}${!hideText ? ' ban' : ''}`;
       case 'raw': return `${value}${!hideText ? ' raw' : ''}`;
       case 'dynamic':
-        const rai = (value / this.rai);
+        const rai = (value / this.ban);
         if (rai >= 1000000) {
-          return `${(value / this.mrai).toFixed(this.precision)}${!hideText ? ' mRai' : ''}`;
+          return `${(value / this.mban).toFixed(this.precision)}${!hideText ? ' BAN' : ''}`;
         } else if (rai >= 1000) {
-          return `${(value / this.krai).toFixed(this.precision)}${!hideText ? ' kRai' : ''}`;
+          return `${(value / this.kban).toFixed(this.precision)}${!hideText ? ' kBAN' : ''}`;
         } else if (rai >= 0.00001) {
-          return `${(value / this.rai).toFixed(this.precision)}${!hideText ? ' Rai' : ''}`;
+          return `${(value / this.ban).toFixed(this.precision)}${!hideText ? ' ban' : ''}`;
         } else if (rai === 0) {
-          return `${value}${!hideText ? ' mRai' : ''}`;
+          return `${value}${!hideText ? ' BAN' : ''}`;
         } else {
           return `${value}${!hideText ? ' raw' : ''}`;
         }
