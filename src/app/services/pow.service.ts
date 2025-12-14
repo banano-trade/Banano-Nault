@@ -12,6 +12,11 @@ export const baseThreshold = 'fffffe0000000000'; // Banano base work threshold
 const hardwareConcurrency = window.navigator.hardwareConcurrency || 2;
 const workerCount = Math.max(hardwareConcurrency - 1, 1);
 let workerList = [];
+const powServerList = [
+  { name: 'XNOPay UK 1', api: 'https://uk1.public.xnopay.com/proxy' },
+  { name: 'Rainstorm City', api: 'https://rainstorm.city/api' },
+  { name: 'NanOslo', api: 'https://nanoslo.0x.no/proxy' },
+];
 export enum workState {'success', 'cancelled', 'error'}
 
 @Injectable()
@@ -138,9 +143,11 @@ export class PowService {
     let powSource = this.appSettings.settings.powSource;
     const multiplierSource: Number = this.appSettings.settings.multiplierSource;
     let localMultiplier: Number = 1;
+    let usePowServerList = false;
 
     if (powSource === 'best') {
       powSource = this.determineBestPoWMethod();
+      usePowServerList = true; // best = only use the curated PoW list
     }
 
     if (powSource === 'clientCPU' || powSource === 'clientWebGL' || powSource === 'custom') {
@@ -155,7 +162,9 @@ export class PowService {
     switch (powSource) {
       default:
       case 'server':
-        const serverWork = await this.getHashServer(queueItem.hash, queueItem.multiplier);
+        const serverWork = usePowServerList ?
+          await this.getHashFromPowList(queueItem.hash, queueItem.multiplier) :
+          await this.getHashServer(queueItem.hash, queueItem.multiplier);
         if (serverWork) {
           work.work = serverWork;
           work.state = workState.success;
@@ -217,9 +226,27 @@ export class PowService {
   /**
    * Actual PoW functions
    */
-  async getHashServer(hash, multiplier, workServer = '') {
+  private shufflePowServers() {
+    return powServerList
+      .map(server => ({ server, sort: Math.random() }))
+      .sort((a, b) => a.sort - b.sort)
+      .map(({ server }) => server);
+  }
+
+  async getHashFromPowList(hash, multiplier) {
+    const servers = this.shufflePowServers();
+    for (const server of servers) {
+      const work = await this.getHashServer(hash, multiplier, server.api, server.name);
+      if (work) {
+        return work;
+      }
+    }
+    return null;
+  }
+
+  async getHashServer(hash, multiplier, workServer = '', serverLabel = '') {
     const newThreshold = this.util.nano.difficultyFromMultiplier(multiplier, baseThreshold);
-    const serverString = workServer === '' ? 'external' : 'custom';
+    const serverString = serverLabel || (workServer === '' ? 'external' : 'custom');
     console.log('Generating work with multiplier ' + multiplier + ' at threshold ' +
       newThreshold + ' using ' + serverString + ' server for hash: ', hash);
     return await this.api.workGenerate(hash, newThreshold, workServer)

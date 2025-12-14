@@ -1543,13 +1543,16 @@ input[type=number] {
 // ========================================================================
 
 .form-icon-btn {
-	background: @global-primary-background;
+	background: #16A670;
 	border-bottom-right-radius: @global-border-radius-small;
 	border-top-right-radius: @global-border-radius-small;
 	padding: 0 10px;
 	color: #fff;
 
-	&:hover {
+	&:hover,
+	&:focus {
+		background: #16A670;
+		color: #fff;
 		text-decoration: none;
 	}
 }
