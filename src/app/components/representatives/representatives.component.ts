@@ -112,7 +112,8 @@ export class RepresentativesComponent implements OnInit {
       for (const representative of verifiedReps) {
         const temprep = {
           id: representative.account,
-          name: representative.alias
+          name: representative.alias,
+          score: representative.score
         };
 
         this.representativeList.push(temprep);
@@ -191,7 +192,7 @@ export class RepresentativesComponent implements OnInit {
       .filter(a => a.name.toLowerCase().indexOf(search.toLowerCase()) !== -1)
       // remove duplicate accounts
       .filter((item, pos, self) => this.util.array.findWithAttr(self, 'id', item.id) === pos)
-      .slice(0, 5);
+      .slice(0, 20);
 
     this.representativeResults$.next(matches);
   }

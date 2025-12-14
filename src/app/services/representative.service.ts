@@ -70,6 +70,7 @@ export class RepresentativeService {
   onlineStakeTotal = new BigNumber(115202418);
 
   loaded = false;
+  representativeScoresCache: any[] = null;
 
   constructor(
     private wallet: WalletService,
@@ -78,7 +79,7 @@ export class RepresentativeService {
     private ninja: NinjaService
   ) {
     this.representatives = this.defaultRepresentatives;
-    this.tryUpdateRepresentativesFromCreeper();
+    this.tryUpdateRepresentativesFromScores();
   }
 
   /**
@@ -123,6 +124,10 @@ export class RepresentativeService {
     const uniqueReps = this.getUniqueRepresentatives(accounts);
     const representatives = await this.getRepresentativesDetails(uniqueReps);
     const onlineReps = await this.getOnlineRepresentatives();
+    const scoreReps = await this.getRepresentativeScores();
+    const scoreRepsMap = new Map(
+      scoreReps.map(rep => [this.util.account.normalizeAccount(rep.address, 'ban'), rep])
+    );
     const quorum = await this.api.confirmationQuorum();
 
     const online_stake_total = (quorum && quorum.online_stake_total) ? this.util.nano.rawToMnano(quorum.online_stake_total) : null;
@@ -132,12 +137,16 @@ export class RepresentativeService {
 
     // Now, loop through each representative and determine some details about it
     for (const representative of representatives) {
-      const repOnline = onlineReps.indexOf(representative.account) !== -1;
+      const repScoreData = scoreRepsMap.get(representative.account) || scoreRepsMap.get(this.util.account.normalizeAccount(representative.account, 'ban'));
+      const repOnline = (repScoreData && repScoreData.online !== undefined)
+        ? !!repScoreData.online
+        : onlineReps.indexOf(representative.account) !== -1;
       const knownRep = this.getRepresentative(representative.account);
-      const knownRepNinja = await this.ninja.getAccount(representative.account);
+      const knownRepNinja = repScoreData ? null : await this.ninja.getAccount(representative.account);
 
       const nanoWeight = this.util.nano.rawToMnano(representative.weight || 0);
-      const percent = this.onlineStakeTotal ? nanoWeight.div(this.onlineStakeTotal).times(100) : new BigNumber(0);
+      const hasOnlineStakeTotal = this.onlineStakeTotal && !this.onlineStakeTotal.isZero();
+      const percent = hasOnlineStakeTotal ? nanoWeight.div(this.onlineStakeTotal).times(100) : new BigNumber(0);
 
       const repStatus: RepresentativeStatus = {
         online: repOnline,
@@ -196,14 +205,57 @@ export class RepresentativeService {
           repStatus.warn = true;
           repStatus.changeRequired = true;
         }
-      } else if (knownRepNinja) {
+      }
+
+      if (!label && repScoreData?.alias) {
+        status = status === 'none' ? 'ok' : status;
+        label = repScoreData.alias;
+      } else if (!label && knownRepNinja) {
         status = status === 'none' ? 'ok' : status;
         label = knownRepNinja.alias;
       }
 
       const uptimeIntervalDays = 7;
+      const uptimeFromScores = repScoreData?.uptimePercentages?.week ?? repScoreData?.uptimePercentages?.month ?? null;
 
-      if (knownRepNinja && !repStatus.trusted) {
+      if (repScoreData && !repStatus.trusted) {
+        if (repScoreData.score !== undefined && repScoreData.score !== null) {
+          repStatus.score = repScoreData.score;
+        }
+
+        if (uptimeFromScores !== null && uptimeFromScores !== undefined) {
+          repStatus.uptime = uptimeFromScores;
+        }
+
+        if (repStatus.score !== null) {
+          if (repStatus.score < 60) {
+            status = 'alert';
+            repStatus.warn = true;
+            repStatus.changeRequired = true;
+          } else if (repStatus.score < 80 && status !== 'alert') {
+            status = 'warn';
+            repStatus.warn = true;
+          }
+        }
+
+        if (repStatus.uptime !== null) {
+          let uptimeIntervalValue = repStatus.uptime;
+          if (repOnline === true) {
+            uptimeIntervalValue = Math.max(uptimeIntervalValue, 1);
+          }
+
+          if (uptimeIntervalValue < 50) {
+            status = 'alert';
+            repStatus.veryLowUptime = true;
+            repStatus.warn = true;
+            repStatus.changeRequired = true;
+          } else if (uptimeIntervalValue < 60 && status !== 'alert') {
+            status = 'warn';
+            repStatus.lowUptime = true;
+            repStatus.warn = true;
+          }
+        }
+      } else if (knownRepNinja && !repStatus.trusted) {
         if (knownRepNinja.closing === true) {
           status = 'alert';
           repStatus.closing = true;
@@ -318,15 +370,13 @@ export class RepresentativeService {
   async getOnlineRepresentatives(): Promise<string[]> {
     const representatives = [];
 
-    const creeperReps = await this.getCreeperRepresentatives();
-    if (Array.isArray(creeperReps) && creeperReps.length) {
-      const online = creeperReps
-        .filter(rep => rep?.online)
-        .map(rep => this.util.account.normalizeAccount(rep.address, 'ban'))
-        .filter(acc => this.util.account.isValidAccount(acc));
-      if (online.length) {
-        return online;
-      }
+    const scoreReps = await this.getRepresentativeScores();
+    const online = scoreReps
+      .filter(rep => rep?.online)
+      .map(rep => this.util.account.normalizeAccount(rep.address, 'ban'))
+      .filter(acc => this.util.account.isValidAccount(acc));
+    if (online.length) {
+      return online;
     }
 
     const reps = await this.api.representativesOnline();
@@ -381,7 +431,7 @@ export class RepresentativeService {
     this.loaded = true;
 
     if (!representativeStore) {
-      this.tryUpdateRepresentativesFromCreeper();
+      this.tryUpdateRepresentativesFromScores();
     }
 
     return list;
@@ -489,11 +539,11 @@ export class RepresentativeService {
   // eslint-disable-next-line @typescript-eslint/member-ordering
   nfReps = [];
 
-  private async tryUpdateRepresentativesFromCreeper(minWeight = 100000) {
-    const creeperReps = await this.getCreeperRepresentatives(minWeight);
-    if (!creeperReps || !creeperReps.length) return;
+  private async tryUpdateRepresentativesFromScores(minWeight = 0) {
+    const scoreReps = await this.getRepresentativeScores(minWeight);
+    if (!scoreReps || !scoreReps.length) return;
 
-    const mapped = this.mapCreeperRepsToStored(creeperReps);
+    const mapped = this.mapScoreRepsToStored(scoreReps);
     if (!mapped.length) return;
 
     this.defaultRepresentatives = mapped;
@@ -504,20 +554,41 @@ export class RepresentativeService {
     }
   }
 
-  private async getCreeperRepresentatives(minWeight = 100000): Promise<any[] | null> {
-    return await this.api.creeperRepresentatives(minWeight, true);
+  private async getRepresentativeScores(minWeight = 0): Promise<any[]> {
+    if (this.representativeScoresCache && this.representativeScoresCache.length) {
+      return this.representativeScoresCache.filter(rep => (rep.weight || 0) >= minWeight);
+    }
+
+    const reps = await this.api.representativeScores();
+    if (!Array.isArray(reps)) {
+      this.representativeScoresCache = [];
+      return [];
+    }
+
+    const normalized = reps
+      .map(rep => {
+        const address = this.util.account.normalizeAccount(rep.address || '', 'ban');
+        if (!this.util.account.isValidAccount(address)) return null;
+        return { ...rep, address };
+      })
+      .filter((rep): rep is any => !!rep);
+
+    this.representativeScoresCache = normalized;
+
+    return normalized.filter(rep => (rep.weight || 0) >= minWeight);
   }
 
-  private mapCreeperRepsToStored(creeperReps: any[]): StoredRepresentative[] {
-    return creeperReps
-      .map((rep, idx) => {
-        const id = this.util.account.normalizeAccount(rep.address || '', 'ban');
-        if (!this.util.account.isValidAccount(id)) return null;
-        const short = `${id.slice(0, 11)}...${id.slice(-6)}`;
+  private mapScoreRepsToStored(scoreReps: any[]): StoredRepresentative[] {
+    return scoreReps
+      .map(rep => {
+        const id = rep.address;
+        const alias = (rep.alias || '').trim();
+        const name = alias !== '' ? alias : `${id.slice(0, 11)}...${id.slice(-6)}`;
+        const trusted = rep.score !== undefined && rep.score !== null ? (rep.score >= 80 && !!rep.online) : !!rep.online;
         return {
           id,
-          name: short,
-          trusted: !!rep.online,
+          name,
+          trusted,
         } as StoredRepresentative;
       })
       .filter((rep): rep is StoredRepresentative => !!rep);

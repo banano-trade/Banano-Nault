@@ -114,19 +114,26 @@ export class ApiService {
     return await this.request('representatives_online', { }, false);
   }
 
-  async creeperRepresentatives(minimumWeight = 100000, includeDelegatorCount = true): Promise<any[] | null> {
-    const url = 'https://api.creeper.banano.cc/banano/v1/representatives';
-    const body = { minimumWeight, includeDelegatorCount };
-    try {
-      const res: any = await this.http.post(url, body, { responseType: 'json' }).toPromise();
-      if (Array.isArray(res)) {
-        return res;
+  async representativeScores(): Promise<any[] | null> {
+    const urls = [
+      'https://spyglass.banano.trade/banano/v1/representatives/scores',
+      'https://api.spyglass.pw/banano/v1/representatives/scores',
+      'https://api.moonano.net/banano/v1/representatives/scores',
+      'https://api.creeper.banano.cc/banano/v1/representatives/scores',
+    ];
+
+    for (const url of urls) {
+      try {
+        const res: any = await this.http.get(url, { responseType: 'json' }).toPromise();
+        if (Array.isArray(res)) {
+          return res;
+        }
+      } catch (err) {
+        console.log(`Representative scores fetch failed (${url})`, err?.status || err);
       }
-      return null;
-    } catch (err) {
-      console.log('Creeper representatives fetch failed', err?.status || err);
-      return null;
     }
+
+    return null;
   }
 
   async blocksInfo(blocks): Promise<{blocks: any, error?: string}> {
