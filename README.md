@@ -4,7 +4,7 @@
 [![GitHub All Releases](https://img.shields.io/github/downloads/banano-trade/Banano-Nault/total)](https://github.com/banano-trade/Banano-Nault/releases/latest)
 [![Discord](https://img.shields.io/badge/discord-join%20chat-orange.svg?logo=discord&color=7289DA)](http://chat.banano.cc/)
 
-Nault is a community-driven fork of the popular nano wallet [NanoVault](https://github.com/cronoh/nanovault) 💙
+Nault is a community-driven fork of the popular nano wallet [Nault](https://github.com/Nault/Nault) 💙
 
 It's a fully client-side signing wallet for sending and receiving [nano](https://github.com/nanocurrency/nano-node/) either directly in your browser at [nault.cc](https://nault.cc) or with the [desktop app](https://github.com/banano-trade/Banano-Nault/releases/latest).
 
@@ -56,7 +56,7 @@ If you are looking for more interactive and quick support compared to creating a
 
 Special thanks to the following!
 
-- [NanoVault](https://github.com/cronoh/nanovault) - The original one
+- [Nault](https://github.com/Nault/Nault) - The original one
 - [numtel/nano-webgl-pow](https://github.com/numtel/nano-webgl-pow) - WebGL PoW Implementation
 - [jaimehgb/RaiBlocksWebAssemblyPoW](https://github.com/jaimehgb/RaiBlocksWebAssemblyPoW) - CPU PoW Implementation
 - [dcposch/blakejs](https://github.com/dcposch/blakejs) - Blake2b Implementation
