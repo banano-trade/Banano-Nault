@@ -108,14 +108,19 @@ export class WebsocketService {
     }, this.keepaliveTimeout);
   }
 
-
+  private queueCommand(event: any) {
+    this.queuedCommands.push(event);
+    if (this.queuedCommands.length >= 3) {
+      this.queuedCommands.shift(); // Prune queued commands
+    }
+  }
 
   subscribeAccounts(accountIDs: string[]) {
     const event = {
       action: 'subscribe',
       topic: 'confirmation',
       options: {
-        accounts: accountIDs
+        accounts: accountIDs,
       }
     };
 
@@ -124,33 +129,31 @@ export class WebsocketService {
         this.subscribedAccounts.push(account); // Keep a unique list of subscriptions for reconnecting
       }
     });
+
     if (!this.socket.connected) {
-      this.queuedCommands.push(event);
-      if (this.queuedCommands.length >= 3) {
-        this.queuedCommands.shift(); // Prune queued commands
-      }
+      this.queueCommand(event);
       return;
     }
+
     this.socket.ws.send(JSON.stringify(event));
   }
 
   unsubscribeAccounts(accountIDs: string[]) {
-    const event = {
-      action: 'unsubscribe',
-      topic: 'confirmation',
-      options: {
-        accounts: accountIDs
-      }
-    };
-
     accountIDs.forEach(account => {
       const existingIndex = this.subscribedAccounts.indexOf(account);
       if (existingIndex !== -1) {
         this.subscribedAccounts.splice(existingIndex, 1); // Remove from our internal subscription list
       }
     });
-    // If we aren't connected, we don't need to do anything.  On reconnect, it won't subscribe.
+    // If we aren't connected, we don't need to do anything. On reconnect, it won't subscribe.
     if (this.socket.connected) {
+      const event = {
+        action: 'unsubscribe',
+        topic: 'confirmation',
+        options: {
+          accounts: accountIDs
+        }
+      };
       this.socket.ws.send(JSON.stringify(event));
     }
   }

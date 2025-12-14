@@ -77,7 +77,7 @@ export class AppSettingsService {
       name: 'Banano Trade',
       value: 'banano-trade',
       api: 'https://api.banano.trade/proxy',
-      ws: 'wss://ws2.banano.trade',
+      ws: 'wss://ws.banano.trade',
       auth: null,
       shouldRandom: true,
     },
@@ -85,7 +85,7 @@ export class AppSettingsService {
       name: 'Banano Booster',
       value: 'banano-booster',
       api: 'https://booster.dev-ptera.com/banano-rpc',
-      ws: 'wss://ws2.banano.trade',
+      ws: 'wss://ws.banano.trade',
       auth: null,
       shouldRandom: true,
     },
@@ -93,7 +93,7 @@ export class AppSettingsService {
       name: 'Kalium',
       value: 'kalium',
       api: 'https://kaliumapi.appditto.com/api',
-      ws: 'wss://ws2.banano.trade',
+      ws: 'wss://ws.banano.trade',
       auth: null,
       shouldRandom: true,
     },
@@ -101,7 +101,7 @@ export class AppSettingsService {
       name: 'JungleTV',
       value: 'jungletv',
       api: 'https://public.node.jungletv.live/rpc',
-      ws: 'wss://ws2.banano.trade',
+      ws: 'wss://ws.banano.trade',
       auth: null,
       shouldRandom: false,
     },
@@ -144,6 +144,12 @@ export class AppSettingsService {
       // migrate old key to new namespace
       localStorage.setItem(this.storeKey, settingsStore);
     }
+
+    // Migrate legacy websocket endpoints to current one
+    if (settings.serverWS && settings.serverWS.indexOf('ws2.banano.trade') !== -1) {
+      settings.serverWS = settings.serverWS.replace('ws2.banano.trade', 'ws.banano.trade');
+    }
+
     this.settings = Object.assign(this.settings, settings);
 
     if (this.settings.language === null) {
