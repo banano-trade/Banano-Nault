@@ -105,6 +105,7 @@ export class ConfigureAppComponent implements OnInit {
 
   identiconOptions = [
     { name: this.translocoService.translate('configure-app.identicon-options.none'), value: 'none' },
+    { name: this.translocoService.translate('configure-app.identicon-options.monkey-by-monkey-bananocc'), value: 'monkey' },
     { name: this.translocoService.translate('configure-app.identicon-options.nanoidenticons-by-keerifox'), value: 'nanoidenticons' },
     { name: this.translocoService.translate('configure-app.identicon-options.natricon-by-appditto'), value: 'natricon' },
   ];

@@ -2,8 +2,14 @@
 	<div #canvasContainer class="canvas-container"></div>
 </ng-container>
 <ng-container *ngIf="(settingIdenticonsStyle === 'natricon')">
-	<img class="natricon" [src]="('https://natricon.com/api/v1/nano?address=' + accountID)" (error)="imageLoadErrorOccurred = true" *ngIf="!imageLoadErrorOccurred">
-	<div class="natricon-placeholder" *ngIf="imageLoadErrorOccurred">
+	<img class="natricon" [src]="('https://natricon.com/api/v1/nano?address=' + accountID)" (error)="natriconLoadErrorOccurred = true" *ngIf="!natriconLoadErrorOccurred">
+	<div class="natricon-placeholder" *ngIf="natriconLoadErrorOccurred">
+		<img src="assets/img/natricon-placeholder.svg">
+	</div>
+</ng-container>
+<ng-container *ngIf="(settingIdenticonsStyle === 'monkey')">
+	<img class="monkey" [src]="monKeyUrl" (error)="monKeyLoadErrorOccurred = true" *ngIf="!monKeyLoadErrorOccurred && monKeyUrl">
+	<div class="natricon-placeholder" *ngIf="monKeyLoadErrorOccurred || !monKeyUrl">
 		<img src="assets/img/natricon-placeholder.svg">
 	</div>
 </ng-container>

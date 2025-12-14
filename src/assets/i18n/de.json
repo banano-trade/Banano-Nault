@@ -11,7 +11,10 @@
     "unknown-status": "Unbekannter Status"
   },
   "configure-app": {
-    "language": "Sprache"
+    "language": "Sprache",
+    "identicon-options": {
+      "monkey-by-monkey-bananocc": "MonKey (monkey.banano.cc)"
+    }
   },
   "general": {
     "account": "Konto",
