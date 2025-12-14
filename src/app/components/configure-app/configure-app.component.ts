@@ -164,6 +164,8 @@ export class ConfigureAppComponent implements OnInit {
   selectedServer = null;
 
   defaultRepresentative = null;
+  bnsEnabled = false;
+  bnsBanTldAccount = '';
   representativeResults$ = new BehaviorSubject([]);
   showRepresentatives = false;
   representativeListMatch = '';
@@ -300,6 +302,8 @@ export class ConfigureAppComponent implements OnInit {
 
     this.minimumReceive = settings.minimumReceive;
     this.defaultRepresentative = settings.defaultRepresentative;
+    this.bnsEnabled = settings.bnsEnabled;
+    this.bnsBanTldAccount = settings.bnsBanTldAccount || 'ban_1fdo6b4bqm6pp1w55duuqw5ebz455975o4qcp8of85fjcdw9qhuzxsd3tjb9';
     if (this.defaultRepresentative) {
       this.validateRepresentative();
     }
@@ -446,6 +450,8 @@ export class ConfigureAppComponent implements OnInit {
       decentralizedAliasesOption: decentralizedAliasesOption,
       minimumReceive: minReceive,
       defaultRepresentative: this.defaultRepresentative || null,
+      bnsEnabled: this.bnsEnabled,
+      bnsBanTldAccount: this.bnsBanTldAccount || '',
     };
 
     this.appSettings.setAppSettings(newSettings);

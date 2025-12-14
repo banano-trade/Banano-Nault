@@ -16,6 +16,7 @@ import { environment } from 'environments/environment';
 import { TranslocoService } from '@ngneat/transloco';
 import { HttpClient } from '@angular/common/http';
 import * as nanocurrency from 'nanocurrency';
+import { BnsService } from '../../services/bns.service';
 
 const nacl = window['nacl'];
 
@@ -37,6 +38,11 @@ export class SendComponent implements OnInit {
     name: '',
     domain: '',
   }
+
+  bnsLookupInProgress = false;
+  bnsResolvedName = '';
+  bnsResolvedAddress = '';
+  bnsLookupFor = '';
 
   aliasLookup = {
     ...this.ALIAS_LOOKUP_DEFAULT_STATE,
@@ -92,7 +98,8 @@ export class SendComponent implements OnInit {
     private util: UtilService,
     private qrModalService: QrModalService,
     private http: HttpClient,
-    private translocoService: TranslocoService) { }
+    private translocoService: TranslocoService,
+    private bnsService: BnsService) { }
 
   async ngOnInit() {
     const params = this.route.snapshot.queryParams;
@@ -225,6 +232,8 @@ export class SendComponent implements OnInit {
 
     const destinationAddress = this.toAccountID || '';
 
+    this.maybeResolveBns(destinationAddress);
+
     const nanoURIScheme = /^(ban|nano):.+$/g;
     const isNanoURI = nanoURIScheme.test(destinationAddress);
 
@@ -312,6 +321,58 @@ export class SendComponent implements OnInit {
     this.aliasResults$.next([{ ...this.aliasLookup }]);
 
     this.toAccountStatus = 1; // Neutral state
+  }
+
+  private clearBnsState() {
+    this.bnsLookupInProgress = false;
+    this.bnsResolvedName = '';
+    this.bnsResolvedAddress = '';
+    this.bnsLookupFor = '';
+  }
+
+  private async maybeResolveBns(destinationAddress: string) {
+    if (!this.settings.settings.bnsEnabled || !this.settings.settings.bnsBanTldAccount || !this.settings.settings.serverAPI) {
+      this.clearBnsState();
+      return;
+    }
+
+    const lower = (destinationAddress || '').toLowerCase().trim();
+    if (!lower.endsWith('.ban')) {
+      this.clearBnsState();
+      return;
+    }
+
+    if (this.bnsLookupInProgress && this.bnsLookupFor === lower) {
+      return;
+    }
+
+    this.bnsLookupInProgress = true;
+    this.bnsLookupFor = lower;
+
+    try {
+      const resolved = await this.bnsService.resolveBanName(lower, this.settings.settings.bnsBanTldAccount, this.settings.settings.serverAPI);
+      if (this.bnsLookupFor !== lower) {
+        return;
+      }
+
+      if (resolved && this.util.account.isValidAccount(resolved)) {
+        this.bnsResolvedName = lower;
+        this.bnsResolvedAddress = resolved;
+        this.toAccountID = resolved;
+        this.addressAliasMatch = `${lower} (BNS)`;
+        this.toAccountStatus = 2;
+      } else {
+        this.notificationService.sendWarning(`Could not resolve ${lower} via BNS`);
+        this.clearBnsState();
+      }
+    } catch (err) {
+      if (this.bnsLookupFor === lower) {
+        this.notificationService.sendWarning(`Could not resolve ${lower} via BNS`);
+        this.clearBnsState();
+      }
+    } finally {
+      this.bnsLookupInProgress = false;
+    }
   }
 
   async lookupAlias() {
@@ -460,13 +521,18 @@ export class SendComponent implements OnInit {
     // Remove spaces from the account id
     this.toAccountID = this.toAccountID.replace(/ /g, '');
 
-    this.addressAliasMatch = (
-        (
-            (this.aliasLookupLatestSuccessful.address !== '')
-          && (this.aliasLookupLatestSuccessful.address === this.toAccountID)
-        )
-      ? this.aliasLookupLatestSuccessful.fullText
-      : null
+    const bnsMatch = (
+      (this.bnsResolvedAddress !== '')
+        && (this.bnsResolvedAddress === this.toAccountID)
+    ) ? `${this.bnsResolvedName} (BNS)` : null;
+
+    this.addressAliasMatch = bnsMatch || (
+      (
+          (this.aliasLookupLatestSuccessful.address !== '')
+        && (this.aliasLookupLatestSuccessful.address === this.toAccountID)
+      )
+        ? this.aliasLookupLatestSuccessful.fullText
+        : null
     );
 
     if (this.isDestinationAccountAlias === true) {

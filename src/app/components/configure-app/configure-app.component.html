@@ -218,6 +218,24 @@
             <div class="uk-form-horizontal">
 
               <div class="uk-margin">
+                <label class="uk-form-label">Banano Name Service (.ban)</label>
+                <div class="uk-form-controls uk-margin-small-bottom">
+                  <label>
+                    <input class="uk-checkbox" type="checkbox" [(ngModel)]="bnsEnabled">
+                    Enable resolving .ban names to Banano addresses
+                  </label>
+                </div>
+                <div class="uk-form-controls">
+                  <input [(ngModel)]="bnsBanTldAccount" [disabled]="!bnsEnabled" class="uk-input" type="text" placeholder="TLD account for .ban (ban_…)" autocomplete="off">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="uk-width-1-1">
+            <div class="uk-form-horizontal">
+
+              <div class="uk-margin">
                 <label class="uk-form-label">{{ 'configure-app.default-representative' | transloco }} <span uk-icon="icon: info;" uk-tooltip [title]="t('configure-app.this-representative-will-be-used-for-any-new-account')"></span></label>
 
                 <div class="uk-form-controls">

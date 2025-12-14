@@ -13,6 +13,8 @@ interface AppSettings {
   walletStore: string;
   displayCurrency: string;
   defaultRepresentative: string | null;
+  bnsEnabled: boolean;
+  bnsBanTldAccount: string;
   lockOnClose: number;
   lockInactivityMinutes: number;
   ledgerReconnect: LedgerConnectionType;
@@ -42,6 +44,8 @@ export class AppSettingsService {
     walletStore: 'localStorage',
     displayCurrency: 'USD',
     defaultRepresentative: 'ban_1hootubxy68fhhrctjmaias148tz91tsse3pq1pgmfedsm3cubhobuihqnxd',
+    bnsEnabled: true,
+    bnsBanTldAccount: 'ban_1fdo6b4bqm6pp1w55duuqw5ebz455975o4qcp8of85fjcdw9qhuzxsd3tjb9',
     lockOnClose: 1,
     lockInactivityMinutes: 30,
     ledgerReconnect: 'usb',
@@ -221,6 +225,8 @@ export class AppSettingsService {
       walletStore: 'localStorage',
       displayCurrency: 'USD',
       defaultRepresentative: 'ban_1hootubxy68fhhrctjmaias148tz91tsse3pq1pgmfedsm3cubhobuihqnxd',
+      bnsEnabled: true,
+      bnsBanTldAccount: 'ban_1fdo6b4bqm6pp1w55duuqw5ebz455975o4qcp8of85fjcdw9qhuzxsd3tjb9',
       lockOnClose: 1,
       lockInactivityMinutes: 30,
       ledgerReconnect: 'usb',

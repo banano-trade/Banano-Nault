@@ -125,8 +125,8 @@ export class RepresentativeService {
     const onlineReps = await this.getOnlineRepresentatives();
     const quorum = await this.api.confirmationQuorum();
 
-    const online_stake_total = quorum ? this.util.nano.rawToMnano(quorum.online_stake_total) : null;
-    this.onlineStakeTotal = online_stake_total ? new BigNumber(online_stake_total) : null;
+    const online_stake_total = (quorum && quorum.online_stake_total) ? this.util.nano.rawToMnano(quorum.online_stake_total) : null;
+    this.onlineStakeTotal = online_stake_total ? new BigNumber(online_stake_total) : new BigNumber(0);
 
     const allReps = [];
 
